@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 预警干预管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    /* 额外增强字体样式一致性 */
+    button, input, select, textarea {
+      font-size: 0.875rem !important;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    th, td {
+      font-size: 0.875rem !important;
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-sidebar {
+      width: 280px;
+      background-color: white;
+      border-left: 1px solid #e5e7eb;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .system-logo {
+      height: 40px;
+      margin: 10px 0;
+    }
+    .assistant-area {
+      width: 400px;
+      background-color: #fff;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    /* 修改预警级别样式，使用通用类替代特殊样式 */
+    .warning-level-high {
+      background-color: #fecaca;
+      color: #dc2626;
+      font-size: 0.875rem !important;
+    }
+    .warning-level-medium {
+      background-color: #fed7aa;
+      color: #ea580c;
+      font-size: 0.875rem !important;
+    }
+    .warning-level-low {
+      background-color: #fef3c7;
+      color: #d97706;
+      font-size: 0.875rem !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，可展开下拉菜单 -->
+          <li class="menu-item px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1 hidden">
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item active px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">预警管理</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 顶部导航标签 -->
+          <div class="mb-6 flex items-center justify-between">
+            <div class="flex space-x-4">
+              <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">预警总览</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">学业预警</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">心理预警</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">失联预警</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">干预管理</button>
+            </div>
+          </div>
+          
+          <!-- 预警统计卡片 -->
+          <div class="grid grid-cols-4 gap-6 mb-6">
+            <!-- 总预警数 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm" style="font-size: 0.875rem !important;">总预警数</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2" style="font-size: 1.25rem !important;">72</span>
+                <span class="text-red-500 text-sm mb-1" style="font-size: 0.875rem !important;">+5.2%</span>
+              </div>
+            </div>
+            
+            <!-- 学业预警 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-book text-yellow-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm" style="font-size: 0.875rem !important;">学业预警</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2" style="font-size: 1.25rem !important;">43</span>
+                <span class="text-red-500 text-sm mb-1" style="font-size: 0.875rem !important;">+3.7%</span>
+              </div>
+            </div>
+            
+            <!-- 心理预警 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-brain text-purple-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm" style="font-size: 0.875rem !important;">心理预警</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2" style="font-size: 1.25rem !important;">21</span>
+                <span class="text-red-500 text-sm mb-1" style="font-size: 0.875rem !important;">+8.1%</span>
+              </div>
+            </div>
+            
+            <!-- 失联预警 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-user-slash text-blue-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm" style="font-size: 0.875rem !important;">失联预警</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2" style="font-size: 1.25rem !important;">8</span>
+                <span class="text-green-500 text-sm mb-1" style="font-size: 0.875rem !important;">-2.5%</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 预警趋势和AI预警系统状态 -->
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="data-card bg-white p-6">
+              <h3 class="text-base font-medium mb-4" style="font-size: 1rem !important;">预警趋势</h3>
+              <canvas id="warningTrendChart" height="250"></canvas>
+            </div>
+            
+            <div class="data-card bg-white p-6">
+              <h3 class="text-base font-medium mb-4" style="font-size: 1rem !important;">AI预警系统状态</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500" style="font-size: 0.875rem !important;">预警准确率</span>
+                    <span class="font-medium" style="font-size: 0.875rem !important;">92.5%</span>
+                  </div>
+                  <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div class="bg-green-500 h-full" style="width: 92.5%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500" style="font-size: 0.875rem !important;">误报率</span>
+                    <span class="font-medium" style="font-size: 0.875rem !important;">7.5%</span>
+                  </div>
+                  <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                    <div class="bg-red-500 h-full" style="width: 7.5%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500" style="font-size: 0.875rem !important;">模型版本</span>
+                    <span class="font-medium" style="font-size: 0.875rem !important;">v2.4.1</span>
+                  </div>
+                  <div class="text-xs text-gray-500" style="font-size: 0.75rem !important;">最近更新：2024-06-20</div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500" style="font-size: 0.875rem !important;">处理速度</span>
+                    <span class="font-medium" style="font-size: 0.875rem !important;">0.8秒/条</span>
+                  </div>
+                  <div class="text-xs text-gray-500" style="font-size: 0.75rem !important;">总处理量：18,452条</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 预警分类分布 -->
+          <div class="data-card bg-white p-6 mb-6">
+            <h3 class="text-base font-medium mb-4" style="font-size: 1rem !important;">预警分类分布</h3>
+            <div class="grid grid-cols-3 gap-6">
+              <div>
+                <h4 class="text-gray-600 text-sm mb-3" style="font-size: 0.875rem !important;">预警类型分布</h4>
+                <canvas id="warningTypeChart" height="200"></canvas>
+              </div>
+              <div>
+                <h4 class="text-gray-600 text-sm mb-3" style="font-size: 0.875rem !important;">预警等级分布</h4>
+                <canvas id="warningLevelChart" height="200"></canvas>
+              </div>
+              <div>
+                <h4 class="text-gray-600 text-sm mb-3" style="font-size: 0.875rem !important;">处理状态分布</h4>
+                <canvas id="processStatusChart" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 最新预警列表 -->
+          <div class="data-card bg-white overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center">
+              <h3 class="font-medium text-gray-800" style="font-size: 1rem !important;">最新预警信息</h3>
+              <button class="text-blue-500 text-sm" style="font-size: 0.875rem !important;">查看全部</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gray-50 text-left">
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">预警ID</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">学生</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">预警类型</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">预警内容</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">预警等级</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">发生时间</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">处理状态</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm" style="font-size: 0.875rem !important;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">W20240705-001</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <div class="flex items-center">
+                        <img src="https://randomuser.me/api/portraits/men/22.jpg" alt="学生头像" class="w-8 h-8 rounded-full mr-2">
+                        <div>
+                          <div style="font-size: 0.875rem !important;">陈明</div>
+                          <div class="text-gray-500 text-xs" style="font-size: 0.75rem !important;">计科2301</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">学业预警</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">挂科3门，高数、线代、C语言程序设计</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs warning-level-high" style="font-size: 0.75rem !important;">高风险</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">2024-07-05 09:15</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800" style="font-size: 0.75rem !important;">待处理</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <button class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600" style="font-size: 0.75rem !important;">处理</button>
+                    </td>
+                  </tr>
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">W20240704-015</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <div class="flex items-center">
+                        <img src="https://randomuser.me/api/portraits/women/22.jpg" alt="学生头像" class="w-8 h-8 rounded-full mr-2">
+                        <div>
+                          <div style="font-size: 0.875rem !important;">李小华</div>
+                          <div class="text-gray-500 text-xs" style="font-size: 0.75rem !important;">计科2302</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">心理预警</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">心理测评结果异常，显示中度抑郁倾向</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs warning-level-medium" style="font-size: 0.75rem !important;">中风险</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">2024-07-04 16:30</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800" style="font-size: 0.75rem !important;">处理中</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <button class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600" style="font-size: 0.75rem !important;">查看</button>
+                    </td>
+                  </tr>
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">W20240704-008</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <div class="flex items-center">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="学生头像" class="w-8 h-8 rounded-full mr-2">
+                        <div>
+                          <div style="font-size: 0.875rem !important;">王强</div>
+                          <div class="text-gray-500 text-xs" style="font-size: 0.75rem !important;">物理2201</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">失联预警</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">连续3天未归寝，电话不通</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs warning-level-high" style="font-size: 0.75rem !important;">高风险</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">2024-07-04 08:00</td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800" style="font-size: 0.75rem !important;">已解决</span>
+                    </td>
+                    <td class="py-3 px-4" style="font-size: 0.875rem !important;">
+                      <button class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600" style="font-size: 0.75rem !important;">查看</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-4 border-t flex justify-center">
+              <button class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm" style="font-size: 0.875rem !important;">
+                加载更多
+              </button>
+            </div>
+          </div>
+        </main>
+        
+        <!-- 右侧智能助手区域 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800" style="font-size: 1rem !important;">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2" style="font-size: 1rem !important;">工作建议</h4>
+              <p class="text-sm text-gray-700" style="font-size: 0.875rem !important;">根据预警数据分析，我为您提供以下建议：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li style="font-size: 0.875rem !important;">• 学业预警数量较上月增长3.7%，建议关注数学类课程的学生学习情况</li>
+                <li style="font-size: 0.875rem !important;">• 有8起高风险预警尚未处理，其中3起为心理预警，建议优先干预</li>
+                <li style="font-size: 0.875rem !important;">• 计算机学院预警处理率低于平均水平，可与该院辅导员进行沟通</li>
+                <li style="font-size: 0.875rem !important;">• 根据历史数据，下周预警数量可能会有一个小高峰，请做好准备</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700" style="font-size: 0.875rem !important;"></p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700" style="font-size: 0.75rem !important;">预警趋势分析</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700" style="font-size: 0.75rem !important;">学业预警处理</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700" style="font-size: 0.75rem !important;">心理预警干预</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700" style="font-size: 0.75rem !important;">生成预警报告</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none" style="font-size: 0.875rem !important;">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 图表初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化子菜单（当前页面是预警管理，所以不默认展开学生信息子菜单）
+      const studentInfoMenu = document.getElementById('studentInfoSubmenu');
+      if (studentInfoMenu) {
+        studentInfoMenu.style.display = 'none';
+        const studentInfoMenuArrow = document.getElementById('studentInfoArrow');
+        if (studentInfoMenuArrow) {
+          studentInfoMenuArrow.classList.remove('fa-chevron-up');
+          studentInfoMenuArrow.classList.add('fa-chevron-down');
+        }
+      }
+      
+      // 预警趋势图表
+      const trendCtx = document.getElementById('warningTrendChart').getContext('2d');
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
+          datasets: [
+            {
+              label: '学业预警',
+              data: [25, 20, 35, 40, 30, 38, 43],
+              borderColor: '#eab308',
+              backgroundColor: 'rgba(234, 179, 8, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: '心理预警',
+              data: [15, 12, 18, 15, 17, 19, 21],
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: '失联预警',
+              data: [5, 7, 4, 9, 12, 10, 8],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                drawBorder: false,
+                color: 'rgba(200, 200, 200, 0.3)',
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      // 预警类型分布
+      const typeCtx = document.getElementById('warningTypeChart').getContext('2d');
+      new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['学业预警', '心理预警', '失联预警'],
+          datasets: [{
+            data: [43, 21, 8],
+            backgroundColor: [
+              'rgba(234, 179, 8, 0.6)',
+              'rgba(139, 92, 246, 0.6)',
+              'rgba(59, 130, 246, 0.6)'
+            ],
+            borderColor: [
+              'rgba(234, 179, 8, 1)',
+              'rgba(139, 92, 246, 1)',
+              'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%'
+        }
+      });
+      
+      // 预警等级分布
+      const levelCtx = document.getElementById('warningLevelChart').getContext('2d');
+      new Chart(levelCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['高风险', '中风险', '低风险'],
+          datasets: [{
+            data: [22, 30, 20],
+            backgroundColor: [
+              'rgba(220, 38, 38, 0.6)',
+              'rgba(234, 88, 12, 0.6)',
+              'rgba(217, 119, 6, 0.6)'
+            ],
+            borderColor: [
+              'rgba(220, 38, 38, 1)',
+              'rgba(234, 88, 12, 1)',
+              'rgba(217, 119, 6, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%'
+        }
+      });
+      
+      // 处理状态分布
+      const statusCtx = document.getElementById('processStatusChart').getContext('2d');
+      new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['待处理', '处理中', '已解决'],
+          datasets: [{
+            data: [28, 24, 20],
+            backgroundColor: [
+              'rgba(234, 179, 8, 0.6)',
+              'rgba(59, 130, 246, 0.6)',
+              'rgba(16, 185, 129, 0.6)'
+            ],
+            borderColor: [
+              'rgba(234, 179, 8, 1)',
+              'rgba(59, 130, 246, 1)',
+              'rgba(16, 185, 129, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '65%'
+        }
+      });
+    });
+    
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+  </script>
+</body>
+</html> 

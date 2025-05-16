@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 学生信息</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px; /* 宽度增加到400px */
+      background-color: #fff; /* 与菜单区域一致的背景色 */
+    }
+    .system-logo {
+      height: 40px;
+      margin: 10px 0;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，改为可展开下拉菜单 -->
+          <li class="menu-item active px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1">
+              <li class="py-2 px-2 rounded-md bg-blue-50 text-blue-600">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">学生信息</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 快捷标签 -->
+          <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
+            <h3 class="text-lg font-semibold mb-3">快捷标签</h3>
+            <div class="flex flex-wrap gap-2">
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">全部学生</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">本院学生</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">我的班级</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">大一新生</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">应届毕业生</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">有预警记录</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">特殊关注</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">贫困生</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">心理异常</span>
+              <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200">学习困难</span>
+            </div>
+          </div>
+
+          <!-- 高级搜索表单 -->
+          <div class="bg-white rounded-lg p-4 shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="text-lg font-semibold">高级搜索</h3>
+              <button class="text-blue-600 text-sm" id="toggleSearch">
+                <i class="fas fa-chevron-down mr-1"></i> 展开/收起
+              </button>
+            </div>
+            <div id="searchForm" class="grid grid-cols-3 gap-4">
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">学号</label>
+                <input type="text" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">姓名</label>
+                <input type="text" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">学院</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="计算机学院">计算机学院</option>
+                  <option value="电子工程学院">电子工程学院</option>
+                  <option value="机械工程学院">机械工程学院</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">专业</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="计算机科学与技术">计算机科学与技术</option>
+                  <option value="软件工程">软件工程</option>
+                  <option value="人工智能">人工智能</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">班级</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="计算机2101">计算机2101</option>
+                  <option value="计算机2102">计算机2102</option>
+                  <option value="软件2101">软件2101</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">年级</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="2020">2020级</option>
+                  <option value="2021">2021级</option>
+                  <option value="2022">2022级</option>
+                  <option value="2023">2023级</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">宿舍楼栋</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="1号楼">1号楼</option>
+                  <option value="2号楼">2号楼</option>
+                  <option value="3号楼">3号楼</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">政治面貌</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="中共党员">中共党员</option>
+                  <option value="中共预备党员">中共预备党员</option>
+                  <option value="共青团员">共青团员</option>
+                  <option value="群众">群众</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="block text-sm text-gray-600 mb-1">是否在校</label>
+                <select class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="">全部</option>
+                  <option value="1">是</option>
+                  <option value="0">否</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end mt-3">
+              <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md mr-2 hover:bg-gray-300">重置</button>
+              <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">查询</button>
+            </div>
+          </div>
+
+          <!-- 学生列表 -->
+          <div class="bg-white rounded-lg p-4 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold">学生列表</h3>
+              <div class="flex items-center">
+                <button class="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 mr-2">导出数据</button>
+                <div class="relative">
+                  <button class="px-3 py-1.5 bg-white border border-gray-300 rounded-md flex items-center">
+                    <i class="fas fa-filter mr-1 text-gray-500"></i>
+                    <span>筛选</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 表格 -->
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      学号
+                      <i class="fas fa-sort ml-1 text-gray-400"></i>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      姓名
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      性别
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      学院
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      专业
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      班级
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      年级
+                      <i class="fas fa-sort ml-1 text-gray-400"></i>
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      联系电话
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='student-detail.html?id=2023001001';">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2023001001</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">张三</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">男</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机学院</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机科学与技术</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机2301</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023级</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">138****1234</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="student-detail.html?id=2023001001" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='student-detail.html?id=2023001002';">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2023001002</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">李四</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">男</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机学院</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">软件工程</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">软件2301</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023级</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">139****5678</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="student-detail.html?id=2023001002" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='student-detail.html?id=2023001003';">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2023001003</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">王五</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">男</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机学院</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">人工智能</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">人工智能2301</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2023级</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">135****9012</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="student-detail.html?id=2023001003" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='student-detail.html?id=2022001001';">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2022001001</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">赵六</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">女</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机学院</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机科学与技术</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机2201</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2022级</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">137****3456</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="student-detail.html?id=2022001001" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='student-detail.html?id=2022001002';">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2022001002</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">钱七</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">女</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">计算机学院</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">软件工程</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">软件2201</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2022级</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">136****7890</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="student-detail.html?id=2022001002" class="text-blue-600 hover:text-blue-900">查看详情</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="flex justify-between items-center mt-4">
+              <div class="text-sm text-gray-700">
+                显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 条，共 <span class="font-medium">125</span> 条记录
+              </div>
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 border rounded-md disabled:opacity-50" disabled>上一页</button>
+                <button class="px-3 py-1 border rounded-md bg-blue-600 text-white">1</button>
+                <button class="px-3 py-1 border rounded-md hover:bg-gray-100">2</button>
+                <button class="px-3 py-1 border rounded-md hover:bg-gray-100">3</button>
+                <span class="px-3 py-1">...</span>
+                <button class="px-3 py-1 border rounded-md hover:bg-gray-100">25</button>
+                <button class="px-3 py-1 border rounded-md hover:bg-gray-100">下一页</button>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- 右侧智能助手区域 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">工作建议</h4>
+              <p class="text-sm text-gray-700">根据您的查询，我可以帮您：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 筛选特定条件的学生名单</li>
+                <li>• 生成学生数据分析报告</li>
+                <li>• 找出需要特别关注的学生</li>
+                <li>• 安排谈心谈话计划</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble user p-3">
+                <p class="text-sm">如何查找有学业预警的学生？</p>
+              </div>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700">您可以使用快捷标签中的"有预警记录"标签，或在高级搜索中添加"预警状态"筛选条件，选择"学业预警"即可查找。我可以帮您生成这类学生的名单和分析报告。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">如何筛选特定班级？</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">查找心理状况异常学生</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">导出学生名单</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">学生数据分析</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('toggleSearch').addEventListener('click', function() {
+      const searchForm = document.getElementById('searchForm');
+      searchForm.classList.toggle('hidden');
+    });
+    
+    // 为常见问题添加点击事件
+    const quickQuestions = document.querySelectorAll('.quick-question');
+    quickQuestions.forEach(question => {
+      question.addEventListener('click', function() {
+        const text = this.textContent;
+        console.log('问题已选择:', text);
+      });
+    });
+
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+
+    // 初始化显示子菜单（因为当前页面是学生查询页面）
+    document.addEventListener('DOMContentLoaded', function() {
+      const submenu = document.getElementById('studentInfoSubmenu');
+      if (submenu) {
+        submenu.style.display = 'block';
+        const arrow = document.getElementById('studentInfoArrow');
+        if (arrow) {
+          arrow.classList.remove('fa-chevron-down');
+          arrow.classList.add('fa-chevron-up');
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

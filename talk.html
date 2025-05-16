@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 谈心谈话管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px; /* 宽度增加到400px */
+      background-color: #fff; /* 与菜单区域一致的背景色 */
+    }
+    .system-logo {
+      height: 40px;
+      margin: 10px 0;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+    .dimension-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1rem;
+    }
+    .dimension-tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .dimension-tab.active {
+      border-bottom-color: #3b82f6;
+      color: #3b82f6;
+      font-weight: 500;
+    }
+    .role-selector {
+      margin-bottom: 1rem;
+    }
+    .role-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      background-color: #f3f4f6;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      transition: all 0.2s;
+    }
+    .role-btn.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+    }
+    .trend-up {
+      color: #10b981;
+    }
+    .trend-down {
+      color: #ef4444;
+    }
+    .trend-neutral {
+      color: #9ca3af;
+    }
+    
+    /* 添加指标趋势图样式 */
+    .trend-chart {
+      height: 40px;
+      margin-top: 8px;
+    }
+    
+    /* 分布图样式 */
+    .mini-distribution-chart {
+      height: 35px;
+      margin-top: 4px;
+    }
+    
+    /* 日程日历样式 */
+    .calendar-wrapper {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 16px;
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    
+    .calendar-weekday {
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+      padding: 4px;
+    }
+    
+    .calendar-day {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .calendar-day:hover {
+      background-color: #f3f4f6;
+    }
+    
+    .calendar-day.today {
+      background-color: #e6f2ff;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+    
+    .calendar-day.has-event:after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      background: #3b82f6;
+      border-radius: 50%;
+    }
+    
+    .calendar-day.has-urgent:after {
+      background: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，可展开下拉菜单 -->
+          <li class="menu-item px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1">
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item active px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">谈心谈话管理</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 页面标题 -->
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">谈心谈话管理</h1>
+              <p class="text-gray-500 mt-1">集中管理谈心谈话日程与记录</p>
+            </div>
+          </div>
+
+          <!-- 谈心谈话日程待办 -->
+          <div class="mb-10">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-base font-semibold text-gray-800">谈心谈话日程待办</h2>
+              <div class="flex items-center">
+                <span class="text-gray-500 mr-2">完成率 42%</span>
+                <span class="text-gray-500">本周</span>
+                <i class="fas fa-chevron-down ml-2 text-gray-500"></i>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6">
+              <!-- 日程日历 -->
+              <div class="calendar-wrapper">
+                <div class="calendar-header">
+                  <button class="text-gray-500"><i class="fas fa-chevron-left"></i></button>
+                  <h3 class="font-medium">2024年7月</h3>
+                  <button class="text-gray-500"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                  <div class="calendar-weekday">日</div>
+                  <div class="calendar-weekday">一</div>
+                  <div class="calendar-weekday">二</div>
+                  <div class="calendar-weekday">三</div>
+                  <div class="calendar-weekday">四</div>
+                  <div class="calendar-weekday">五</div>
+                  <div class="calendar-weekday">六</div>
+                  
+                  <div class="calendar-day text-gray-300">30</div>
+                  <div class="calendar-day">1</div>
+                  <div class="calendar-day">2</div>
+                  <div class="calendar-day">3</div>
+                  <div class="calendar-day">4</div>
+                  <div class="calendar-day">5</div>
+                  <div class="calendar-day">6</div>
+                  
+                  <div class="calendar-day">7</div>
+                  <div class="calendar-day">8</div>
+                  <div class="calendar-day">9</div>
+                  <div class="calendar-day has-event">10</div>
+                  <div class="calendar-day">11</div>
+                  <div class="calendar-day has-urgent">12</div>
+                  <div class="calendar-day">13</div>
+                  
+                  <div class="calendar-day">14</div>
+                  <div class="calendar-day today">15</div>
+                  <div class="calendar-day has-event">16</div>
+                  <div class="calendar-day">17</div>
+                  <div class="calendar-day has-event">18</div>
+                  <div class="calendar-day">19</div>
+                  <div class="calendar-day">20</div>
+                  
+                  <div class="calendar-day">21</div>
+                  <div class="calendar-day">22</div>
+                  <div class="calendar-day">23</div>
+                  <div class="calendar-day">24</div>
+                  <div class="calendar-day">25</div>
+                  <div class="calendar-day">26</div>
+                  <div class="calendar-day">27</div>
+                  
+                  <div class="calendar-day">28</div>
+                  <div class="calendar-day">29</div>
+                  <div class="calendar-day">30</div>
+                  <div class="calendar-day">31</div>
+                  <div class="calendar-day text-gray-300">1</div>
+                  <div class="calendar-day text-gray-300">2</div>
+                  <div class="calendar-day text-gray-300">3</div>
+                </div>
+              </div>
+              
+              <!-- 待办列表 -->
+              <div class="data-card bg-white p-0 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <div class="flex items-center">
+                    <h3 class="font-medium">谈话待办</h3>
+                    <div class="flex ml-4">
+                      <button class="px-3 py-1 text-sm rounded-md bg-blue-50 text-blue-500 mr-2">全部</button>
+                      <button class="px-3 py-1 text-sm rounded-md text-gray-500 mr-2">未完成</button>
+                      <button class="px-3 py-1 text-sm rounded-md text-gray-500">已完成</button>
+                    </div>
+                  </div>
+                  <button class="text-blue-500 text-sm flex items-center" onclick="showAddTodoDialog()">
+                    <i class="fas fa-plus mr-1"></i>添加待办
+                  </button>
+                </div>
+                
+                <ul>
+                  <!-- 谈话待办1 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="far fa-clock text-red-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center">
+                        <h4 class="text-gray-800 font-medium">与张明同学谈心交流</h4>
+                        <span class="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">紧急</span>
+                      </div>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-16 14:00 计算机学院 大三 学业问题</p>
+                    </div>
+                    <div class="flex items-center">
+                      <button class="mr-2 text-blue-500 text-sm">完成</button>
+                      <button class="mr-2 text-gray-500 text-sm">编辑</button>
+                      <button class="text-gray-500 text-sm">删除</button>
+                    </div>
+                  </li>
+                  
+                  <!-- 谈话待办2 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center">
+                        <h4 class="text-gray-800 font-medium">李华同学入党动机交流</h4>
+                      </div>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-18 15:30 哲学院 大二 思想交流</p>
+                    </div>
+                    <div class="flex items-center">
+                      <button class="mr-2 text-blue-500 text-sm">完成</button>
+                      <button class="mr-2 text-gray-500 text-sm">编辑</button>
+                      <button class="text-gray-500 text-sm">删除</button>
+                    </div>
+                  </li>
+                  
+                  <!-- 谈话待办3 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center">
+                        <h4 class="text-gray-800 font-medium">王敏同学心理疏导</h4>
+                        <span class="ml-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded">已完成</span>
+                      </div>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-12 10:00 外国语学院 大一 心理问题</p>
+                    </div>
+                    <div class="flex items-center">
+                      <button class="mr-2 text-gray-400 text-sm">完成</button>
+                      <button class="mr-2 text-gray-500 text-sm">编辑</button>
+                      <button class="text-gray-500 text-sm">删除</button>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 谈心谈话查询和列表 -->
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-base font-semibold text-gray-800">谈心谈话查询</h2>
+              <div class="flex items-center">
+                <button class="flex items-center px-3 py-1 bg-blue-50 text-blue-500 rounded-md mr-3 text-sm">
+                  <i class="fas fa-star mr-1"></i>
+                  <span>重点关注</span>
+                </button>
+                <button class="flex items-center px-3 py-1 bg-gray-100 text-gray-500 rounded-md text-sm">
+                  <i class="fas fa-download mr-1"></i>
+                  <span>导出</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 查询条件 -->
+            <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+              <div class="grid grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">学号/姓名</label>
+                  <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="输入学号或姓名">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">院系</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <option value="">全部院系</option>
+                    <option value="计算机学院">计算机学院</option>
+                    <option value="文学院">文学院</option>
+                    <option value="医学院">医学院</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">班级</label>
+                  <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <option value="">全部班级</option>
+                    <option value="计算机2101">计算机2101</option>
+                    <option value="计算机2102">计算机2102</option>
+                    <option value="计算机2103">计算机2103</option>
+                  </select>
+                </div>
+                <div class="flex items-end justify-end">
+                  <button class="bg-blue-500 text-white px-4 py-2 rounded-md mr-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-search mr-1"></i>查询
+                  </button>
+                  <button class="border border-gray-300 text-gray-600 px-3 py-2 rounded-md mr-2 whitespace-nowrap text-sm">
+                    重置
+                  </button>
+                  <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center whitespace-nowrap text-sm" onclick="showNewTalkDialog()">
+                    <i class="fas fa-plus mr-1"></i>新建谈话
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 学生列表 -->
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gray-50 text-left">
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">学号</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">姓名</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">院系</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">班级</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">最近谈话</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600">谈话次数</th>
+                    <th class="px-4 py-3 text-sm font-medium text-gray-600 text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- 学生1 -->
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 text-sm">20210001</td>
+                    <td class="px-4 py-3 text-sm font-medium">张明</td>
+                    <td class="px-4 py-3 text-sm">计算机学院</td>
+                    <td class="px-4 py-3 text-sm">计算机2101</td>
+                    <td class="px-4 py-3 text-sm">2024-07-01</td>
+                    <td class="px-4 py-3 text-sm">3</td>
+                    <td class="px-4 py-3 text-sm">
+                      <div class="flex items-center justify-end">
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="toggleHistory(this)">
+                          <i class="fas fa-history mr-1"></i>历史
+                        </button>
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="viewStudentDetail(20210001)">
+                          <i class="far fa-eye mr-1"></i>查看
+                        </button>
+                        <button class="text-green-500 mr-3 whitespace-nowrap" onclick="showNewTalkDialog(20210001, '张明')">
+                          <i class="fas fa-plus mr-1"></i>新增
+                        </button>
+                        <button class="text-gray-400 whitespace-nowrap" onclick="toggleFavorite(this, 20210001)">
+                          <i class="far fa-star"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <!-- 学生1的谈话历史 - 默认隐藏 -->
+                  <tr class="bg-blue-50" style="display: none;">
+                    <td colspan="7" class="px-8 py-4">
+                      <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="divide-y divide-gray-100">
+                          <!-- 记录1 -->
+                          <div class="py-3">
+                            <div class="flex justify-end mb-2">
+                              <span class="text-sm text-gray-500">2024-07-01 10:30</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">学生反映对算法课程学习吃力，讨论了学习方法和辅导资源。</p>
+                            <div class="flex justify-end">
+                              <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                            </div>
+                          </div>
+                          
+                          <!-- 记录2 -->
+                          <div class="py-3">
+                            <div class="flex justify-end mb-2">
+                              <span class="text-sm text-gray-500">2024-06-15 14:20</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">讨论了学生未来的职业规划，推荐了相关实习和项目经验积累方向。</p>
+                            <div class="flex justify-end">
+                              <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                            </div>
+                          </div>
+                          
+                          <!-- 记录3 -->
+                          <div class="py-3">
+                            <div class="flex justify-end mb-2">
+                              <span class="text-sm text-gray-500">2024-03-10 09:00</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">新学期入学适应情况交流，学生反映宿舍关系良好，已适应大学学习节奏。</p>
+                            <div class="flex justify-end">
+                              <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <!-- 学生2 -->
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 text-sm">20210015</td>
+                    <td class="px-4 py-3 text-sm font-medium">李华</td>
+                    <td class="px-4 py-3 text-sm">哲学院</td>
+                    <td class="px-4 py-3 text-sm">哲学2102</td>
+                    <td class="px-4 py-3 text-sm">2024-06-20</td>
+                    <td class="px-4 py-3 text-sm">2</td>
+                    <td class="px-4 py-3 text-sm">
+                      <div class="flex items-center justify-end">
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="toggleHistory(this)">
+                          <i class="fas fa-history mr-1"></i>历史
+                        </button>
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="viewStudentDetail(20210015)">
+                          <i class="far fa-eye mr-1"></i>查看
+                        </button>
+                        <button class="text-green-500 mr-3 whitespace-nowrap" onclick="showNewTalkDialog(20210015, '李华')">
+                          <i class="fas fa-plus mr-1"></i>新增
+                        </button>
+                        <button class="text-yellow-400 whitespace-nowrap" onclick="toggleFavorite(this, 20210015)">
+                          <i class="fas fa-star"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <!-- 学生3 -->
+                  <tr class="border-b border-gray-100">
+                    <td class="px-4 py-3 text-sm">20220042</td>
+                    <td class="px-4 py-3 text-sm font-medium">王敏</td>
+                    <td class="px-4 py-3 text-sm">外国语学院</td>
+                    <td class="px-4 py-3 text-sm">英语2201</td>
+                    <td class="px-4 py-3 text-sm">2024-07-12</td>
+                    <td class="px-4 py-3 text-sm">5</td>
+                    <td class="px-4 py-3 text-sm">
+                      <div class="flex items-center justify-end">
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="toggleHistory(this)">
+                          <i class="fas fa-history mr-1"></i>历史
+                        </button>
+                        <button class="text-blue-500 mr-3 whitespace-nowrap" onclick="viewStudentDetail(20220042)">
+                          <i class="far fa-eye mr-1"></i>查看
+                        </button>
+                        <button class="text-green-500 mr-3 whitespace-nowrap" onclick="showNewTalkDialog(20220042, '王敏')">
+                          <i class="fas fa-plus mr-1"></i>新增
+                        </button>
+                        <button class="text-yellow-400 whitespace-nowrap" onclick="toggleFavorite(this, 20220042)">
+                          <i class="fas fa-star"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <!-- 分页 -->
+              <div class="flex justify-between items-center px-4 py-3 border-t border-gray-100">
+                <div class="text-sm text-gray-500">
+                  共 42 条记录，每页显示 10 条
+                </div>
+                <div class="flex items-center">
+                  <button class="w-8 h-8 border border-gray-300 rounded-l-md flex items-center justify-center">
+                    <i class="fas fa-chevron-left text-gray-400"></i>
+                  </button>
+                  <button class="w-8 h-8 border-t border-b border-gray-300 flex items-center justify-center bg-blue-50 text-blue-500">1</button>
+                  <button class="w-8 h-8 border-t border-b border-gray-300 flex items-center justify-center text-gray-500">2</button>
+                  <button class="w-8 h-8 border-t border-b border-gray-300 flex items-center justify-center text-gray-500">3</button>
+                  <button class="w-8 h-8 border-t border-b border-gray-300 flex items-center justify-center text-gray-500">4</button>
+                  <button class="w-8 h-8 border border-gray-300 rounded-r-md flex items-center justify-center">
+                    <i class="fas fa-chevron-right text-gray-500"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 谈心谈话统计 - 删除此标题 -->
+          
+          <!-- 删除以下所有统计指标卡片，保留上面的学生列表和下面的功能区内容 -->
+          
+          <!-- 预警统计 - 删除此标题 -->
+          
+        </main>
+      
+        <!-- 右侧智能助手区域 - 保留原有实现 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">工作建议</h4>
+              <p class="text-sm text-gray-700">根据您的工作面板，我为您提供以下建议：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 您有2项正在进行中的任务，建议优先处理"高年级学生就业指导座谈会准备"</li>
+                <li>• 本周预计有5名学生需要谈心谈话，可以安排在明后两天进行</li>
+                <li>• 有3名学生出现学业预警，建议及时干预</li>
+                <li>• 周报需要在周五前完成撰写，可以使用助手帮您生成初稿</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble user p-3">
+                <p class="text-sm">我最近的工作计划是什么？</p>
+              </div>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700">您近期有3项待办任务：<br>1. 高年级学生就业指导座谈会准备<br>2. 新生入学教育方案制定（已完成）<br>3. 学业预警学生干预计划制定<br><br>此外，您还有5个学生需要进行谈心谈话，建议本周安排时间完成。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">我今天有哪些工作？</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">本周谈心谈话？</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">预警分析</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">生成报告</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 谈话记录详情弹窗 -->
+  <div id="talkDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-1/2 max-h-[90vh] overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-semibold text-lg">谈话记录详情</h3>
+        <button class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 弹窗内容 -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- 学生基本信息 -->
+        <div class="flex items-start mb-6">
+          <div class="w-16 h-16 rounded-full bg-gray-200 overflow-hidden mr-4">
+            <img src="img/avatar-placeholder.jpg" alt="学生头像" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <h4 class="text-lg font-medium">张明</h4>
+            <p class="text-gray-500 text-sm mb-1">学号：20210001 | 计算机学院 | 计算机2101班</p>
+            <div class="flex items-center">
+              <span class="bg-blue-100 text-blue-500 text-xs px-2 py-0.5 rounded mr-2">班长</span>
+              <span class="bg-green-100 text-green-500 text-xs px-2 py-0.5 rounded mr-2">成绩优异</span>
+              <span class="bg-purple-100 text-purple-500 text-xs px-2 py-0.5 rounded">学科竞赛</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话信息 -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div>
+              <p class="text-sm text-gray-500 mb-1">谈话日期</p>
+              <p class="font-medium">2024-07-01 10:30</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">谈话地点</p>
+              <p class="font-medium">计算机学院辅导员办公室</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">时长</p>
+              <p class="font-medium">45分钟</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话内容 -->
+        <div class="mb-6">
+          <h4 class="font-medium mb-3">谈话内容</h4>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <p class="text-gray-700 mb-3">
+              张明同学反映最近对算法课程学习感到吃力，尤其是动态规划和图论算法部分，虽然能理解课堂内容，但作业和实践环节遇到困难。
+            </p>
+            <p class="text-gray-700 mb-3">
+              通过交流了解到，主要问题是缺乏系统性学习和实践不足。我向他推荐了额外的学习资源，包括王道算法课程和力扣平台上的相关题目。
+            </p>
+            <p class="text-gray-700">
+              同时建议他参加算法学习小组，与同学互相讨论，共同解决问题。学生表示会按照建议调整学习方法，并与我保持反馈。
+            </p>
+          </div>
+        </div>
+        
+        <!-- 谈话总结 -->
+        <div>
+          <h4 class="font-medium mb-3">谈话总结</h4>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <p class="text-gray-700">
+              学生学习态度积极，但存在学习方法不当问题。通过提供学习资源和引导参与小组学习，帮助其建立更有效的学习策略。需要两周后跟进效果。
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 弹窗底部 -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md" onclick="closeTalkDetailModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增谈话记录弹窗 -->
+  <div id="newTalkDialog" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center overflow-auto py-8">
+    <div class="bg-white rounded-lg shadow-xl w-3/5 max-w-3xl overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-semibold text-lg">新增谈心谈话记录</h3>
+        <button class="text-gray-400 hover:text-gray-600" onclick="closeNewTalkDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 弹窗内容 -->
+      <div class="flex-1 overflow-y-auto p-6" style="max-height: 70vh;">
+        <!-- 学生选择区域 - 当从查询页面新建时显示 -->
+        <div id="studentSearchSection" class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">学生信息 <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2" placeholder="请输入学号或姓名搜索学生">
+            <button class="absolute right-1 top-1 bg-blue-50 text-blue-500 px-3 py-1 rounded">
+              <i class="fas fa-search mr-1"></i>搜索
+            </button>
+          </div>
+        </div>
+        
+        <!-- 学生信息 - 当从学生行点击新增或从学生详情页点击时显示 -->
+        <div id="studentInfoSection" class="flex items-center mb-6 bg-gray-50 p-4 rounded-lg">
+          <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
+            <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="学生头像" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <h4 class="font-medium" id="dialogStudentName">张明</h4>
+            <p class="text-gray-500 text-sm">学号：<span id="dialogStudentId">20210001</span> | 计算机学院 | 计算机2101班</p>
+          </div>
+        </div>
+        
+        <!-- 分割线 -->
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center">
+            <span class="bg-white px-4 text-sm text-gray-500">基本信息</span>
+          </div>
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="group">
+            <label class="block text-sm text-gray-600 mb-2">谈话日期时间 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="far fa-calendar-alt text-gray-400"></i>
+              </div>
+              <input type="datetime-local" class="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200">
+            </div>
+          </div>
+          <div class="group">
+            <label class="block text-sm text-gray-600 mb-2">谈话地点 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-map-marker-alt text-gray-400"></i>
+              </div>
+              <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入谈话地点">
+            </div>
+          </div>
+        </div>
+        
+        <!-- 分割线 -->
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center">
+            <span class="bg-white px-4 text-sm text-gray-500">谈话内容</span>
+          </div>
+        </div>
+        
+        <!-- 文件上传和语音转文字 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">文件上传</label>
+          <div class="border border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50">
+            <i class="fas fa-file-upload text-gray-400 text-xl mb-2"></i>
+            <p class="text-gray-500 mb-3">上传文件（支持语音文件和文本文件）</p>
+            <div class="flex justify-center">
+              <button class="bg-white text-blue-500 border border-blue-300 px-3 py-1.5 rounded-md text-sm hover:bg-blue-50 transition-all duration-200">
+                <i class="fas fa-upload mr-2"></i>上传文件
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">支持格式：.mp3, .wav, .txt, .docx等</p>
+          </div>
+        </div>
+        
+        <!-- 转换按钮 -->
+        <div class="mb-6 flex justify-center">
+          <button id="convertToText" class="bg-green-50 text-green-600 px-4 py-2 rounded-md text-sm hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" disabled>
+            <i class="fas fa-file-alt mr-2"></i>将语音转换为文字
+          </button>
+        </div>
+        
+        <!-- 谈话内容 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">谈话内容 <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <textarea id="talkContent" class="w-full border border-gray-300 rounded-md px-3 py-2 h-40 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入或从文件导入谈话内容"></textarea>
+            <div class="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-md">
+              <i class="fas fa-keyboard mr-1"></i><span id="charCount">0</span> 字
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI分析按钮 -->
+        <div class="mb-6 flex justify-center">
+          <button id="generateAISummary" class="bg-blue-500 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600 transition-all duration-200" onclick="generateAISummary()">
+            <i class="fas fa-robot mr-2"></i>生成AI总结和建议
+          </button>
+        </div>
+        
+        <!-- AI总结结果 -->
+        <div id="aiSummaryResult" class="mb-6 bg-blue-50 p-4 rounded-md border border-blue-200 hidden">
+          <div class="flex items-start">
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center mr-3 flex-shrink-0 border border-blue-200">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-blue-800 font-medium mb-3">AI 分析与建议</h4>
+              <div id="aiSummaryContent" class="text-gray-700 bg-white p-4 rounded-md border border-blue-100">
+                <!-- AI生成的内容将在这里显示 -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话总结 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">谈话总结 <span class="text-red-500">*</span></label>
+          <textarea id="talkSummary" class="w-full border border-gray-300 rounded-md px-3 py-2 h-32 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入谈话总结或使用AI生成的总结"></textarea>
+        </div>
+      </div>
+      
+      <!-- 弹窗底部 -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
+        <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md mr-3 hover:bg-gray-200 transition-all duration-200" onclick="closeNewTalkDialog()">
+          取消
+        </button>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all duration-200" onclick="submitNewTalk()">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化所有月度趋势图表
+      initMonthlyChart('talkTotalTimeMonthly', '谈心谈话总时长', '#3b82f6');
+      initMonthlyChart('talkCoverageMonthly', '谈心谈话覆盖率', '#10b981');
+      initMonthlyChart('talkAvgTimeMonthly', '谈话平均时间', '#3b82f6');
+      initMonthlyChart('perStudentTimeMonthly', '生均谈话时长', '#3b82f6');
+      initMonthlyChart('avgTalkCountMonthly', '平均谈话次数', '#3b82f6');
+      initMonthlyChart('warningTotalMonthly', '预警总量', '#ef4444');
+      initMonthlyChart('pendingWarningMonthly', '待处理预警', '#ef4444');
+      initMonthlyChart('warningProcessRateMonthly', '预警处理率', '#10b981');
+      initMonthlyChart('warningResolveRateMonthly', '预警解决率', '#10b981');
+      
+      // 初始化所有分布图表
+      initDistributionChart('talkTotalTimeDistribution', '谈心谈话总时长', '#3b82f6');
+      initDistributionChart('talkCoverageDistribution', '谈心谈话覆盖率', '#10b981');
+      initDistributionChart('talkAvgTimeDistribution', '谈话平均时间', '#3b82f6');
+      initDistributionChart('perStudentTimeDistribution', '生均谈话时长', '#3b82f6');
+      initDistributionChart('avgTalkCountDistribution', '平均谈话次数', '#3b82f6');
+      initDistributionChart('warningTotalDistribution', '预警总量', '#ef4444');
+      initDistributionChart('pendingWarningDistribution', '待处理预警', '#ef4444');
+      initDistributionChart('warningProcessRateDistribution', '预警处理率', '#10b981');
+      initDistributionChart('warningResolveRateDistribution', '预警解决率', '#10b981');
+      
+      // 月度趋势图表初始化函数
+      function initMonthlyChart(elementId, title, color) {
+        const ctx = document.getElementById(elementId).getContext('2d');
+        const months = ['2月', '3月', '4月', '5月', '6月', '7月'];
+        let currentData = [];
+        let lastYearData = [];
+        
+        // 根据指标生成示例数据
+        if (title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率')) {
+          // 百分比类型指标
+          currentData = [82, 85, 87, 88, 90, 92].map(val => val + Math.floor(Math.random() * 6 - 3));
+          lastYearData = currentData.map(val => val - Math.floor(Math.random() * 8 + 2));
+        } else if (title.includes('预警')) {
+          // 预警类型指标
+          currentData = [52, 50, 48, 45, 47, 48].map(val => val + Math.floor(Math.random() * 6 - 3));
+          lastYearData = currentData.map(val => val + Math.floor(Math.random() * 8 + 2));
+        } else {
+          // 其他类型指标
+          currentData = [60, 68, 72, 75, 80, 85].map(val => val + Math.floor(Math.random() * 10 - 5));
+          lastYearData = currentData.map(val => val - Math.floor(Math.random() * 10 + 5));
+        }
+        
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: months,
+            datasets: [
+              {
+                label: '本年度',
+                data: currentData,
+                borderColor: color,
+                backgroundColor: `${color}33`,
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 2
+              },
+              {
+                label: '去年同期',
+                data: lastYearData,
+                borderColor: '#9ca3af',
+                backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  boxWidth: 12,
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: title.includes('预警总量') || title.includes('待处理预警'),
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              x: {
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // 分布图表初始化函数
+      function initDistributionChart(elementId, title, color) {
+        const ctx = document.getElementById(elementId).getContext('2d');
+        const units = ['计算机学院', '物理学院', '经济学院', '文学院', '历史学院'];
+        let data = [];
+        
+        // 根据指标生成示例数据
+        if (title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率')) {
+          // 百分比类型指标
+          data = [95, 88, 91, 87, 84].map(val => val + Math.floor(Math.random() * 6 - 3));
+        } else if (title.includes('预警')) {
+          // 预警类型指标
+          data = [15, 10, 12, 14, 11].map(val => val + Math.floor(Math.random() * 4 - 2));
+        } else {
+          // 其他类型指标
+          data = [85, 65, 78, 48, 45].map(val => val + Math.floor(Math.random() * 10 - 5));
+        }
+        
+        // 排序数据（从大到小）
+        const combinedData = units.map((unit, index) => ({ unit, value: data[index] }));
+        combinedData.sort((a, b) => b.value - a.value);
+        const sortedUnits = combinedData.map(item => item.unit);
+        const sortedData = combinedData.map(item => item.value);
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: sortedUnits,
+            datasets: [
+              {
+                axis: 'y',
+                label: title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率') ? '百分比(%)' : '数值',
+                data: sortedData,
+                backgroundColor: color,
+                borderRadius: 2
+              }
+            ]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  font: {
+                    size: 9
+                  }
+                }
+              },
+              y: {
+                ticks: {
+                  font: {
+                    size: 9
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // 为常见问题添加点击事件
+      const quickQuestions = document.querySelectorAll('.quick-question');
+      quickQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+          const text = this.textContent;
+          console.log('问题已选择:', text);
+        });
+      });
+    });
+    
+    // 切换历史记录显示/隐藏
+    function toggleHistory(button) {
+      const row = button.closest('tr');
+      const historyRow = row.nextElementSibling;
+      
+      if (historyRow && historyRow.style.display === 'none') {
+        historyRow.style.display = 'table-row';
+      } else if (historyRow) {
+        historyRow.style.display = 'none';
+      }
+    }
+    
+    // 查看学生详情
+    function viewStudentDetail(studentId) {
+      window.location.href = `student-detail.html?id=${studentId}&source=talk`;
+    }
+    
+    // 显示新增谈话对话框
+    function showNewTalkDialog(studentId, studentName) {
+      const dialog = document.getElementById('newTalkDialog');
+      if (dialog) {
+        // 如果提供了学生ID和姓名（从学生行点击或学生详情页点击）
+        if (studentId && studentName) {
+          // 隐藏查询区域，显示学生信息
+          const searchSection = document.getElementById('studentSearchSection');
+          if (searchSection) {
+            searchSection.style.display = 'none';
+          }
+          
+          // 显示学生信息
+          const infoSection = document.getElementById('studentInfoSection');
+          if (infoSection) {
+            infoSection.style.display = 'flex';
+            document.getElementById('dialogStudentName').innerText = studentName;
+            document.getElementById('dialogStudentId').innerText = studentId;
+          }
+        } else {
+          // 如果没有提供（从查询页面的新建谈话按钮点击）
+          const searchSection = document.getElementById('studentSearchSection');
+          if (searchSection) {
+            searchSection.style.display = 'block';
+          }
+          
+          const infoSection = document.getElementById('studentInfoSection');
+          if (infoSection) {
+            infoSection.style.display = 'none';
+          }
+        }
+        
+        // 显示对话框
+        dialog.classList.remove('hidden');
+      }
+    }
+    
+    // 切换关注状态
+    function toggleFavorite(button, studentId) {
+      const icon = button.querySelector('i');
+      
+      if (icon.classList.contains('far')) {
+        // 未关注 -> 关注
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+        button.classList.remove('text-gray-400');
+        button.classList.add('text-yellow-400');
+      } else {
+        // 关注 -> 取消关注
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+        button.classList.remove('text-yellow-400');
+        button.classList.add('text-gray-400');
+      }
+    }
+    
+    // 关闭新增谈话对话框
+    function closeNewTalkDialog() {
+      document.getElementById('newTalkDialog').classList.add('hidden');
+    }
+    
+    // 提交新增谈话记录
+    function submitNewTalk() {
+      // 提交表单逻辑
+      alert('谈话记录已提交');
+      closeNewTalkDialog();
+    }
+    
+    // 查看谈话详情
+    function showTalkDetail() {
+      document.getElementById('talkDetailModal').classList.remove('hidden');
+    }
+    
+    // 关闭谈话详情弹窗
+    function closeTalkDetailModal() {
+      document.getElementById('talkDetailModal').classList.add('hidden');
+    }
+    
+    // 显示添加待办弹窗
+    function showAddTodoDialog() {
+      document.getElementById('addTodoDialog').classList.remove('hidden');
+    }
+    
+    // 关闭添加待办弹窗
+    function closeAddTodoDialog() {
+      document.getElementById('addTodoDialog').classList.add('hidden');
+    }
+    
+    // 提交添加待办
+    function submitAddTodo() {
+      // 提交表单逻辑
+      alert('待办已添加');
+      closeAddTodoDialog();
+    }
+    
+    // 新增AI总结功能
+    function generateAISummary() {
+      const talkContent = document.getElementById('talkContent').value;
+      
+      // 检查是否有谈话内容
+      if(!talkContent || talkContent.trim() === '') {
+        alert('请先填写谈话内容，再生成AI总结');
+        return;
+      }
+      
+      // 显示加载状态
+      const aiSummaryResult = document.getElementById('aiSummaryResult');
+      const aiSummaryContent = document.getElementById('aiSummaryContent');
+      aiSummaryResult.classList.remove('hidden');
+      aiSummaryContent.innerHTML = `
+        <div class="flex items-center justify-center py-3">
+          <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          <span class="ml-3 text-blue-600">正在分析谈话内容...</span>
+        </div>
+      `;
+      
+      // 模拟AI处理
+      setTimeout(() => {
+        // 分析谈话内容（示例）
+        const summary = analyzeTalkContent(talkContent);
+        
+        // 显示分析结果
+        aiSummaryContent.innerHTML = `
+          <p class="text-gray-700 leading-relaxed">${summary.summary}</p>
+          <div class="flex justify-end mt-3">
+            <button class="text-blue-600 text-sm flex items-center" onclick="copyToSummary()">
+              <i class="far fa-copy mr-1"></i>复制到谈话总结
+            </button>
+          </div>
+        `;
+        
+        // 自动填充谈话总结
+        document.getElementById('talkSummary').value = summary.summary;
+        
+        // 添加动画效果
+        aiSummaryResult.classList.add('animate-fade-in');
+      }, 1500);
+    }
+    
+    // 复制到谈话总结的函数
+    function copyToSummary() {
+      const talkSummary = document.getElementById('talkSummary');
+      const aiSummaryContent = document.getElementById('aiSummaryContent');
+      const summaryText = aiSummaryContent.querySelector('p').textContent;
+      
+      talkSummary.value = summaryText;
+      talkSummary.focus();
+      
+      // 显示复制成功提示
+      const button = aiSummaryContent.querySelector('button');
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-check mr-1"></i>已复制';
+      button.classList.add('text-green-600');
+      
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('text-green-600');
+      }, 2000);
+    }
+    
+    // 模拟谈话内容分析（实际项目中应当调用API）
+    function analyzeTalkContent(content) {
+      // 这里是模拟的AI分析，实际应用中应当调用后端API
+      return {
+        summary: "通过谈话了解到学生在算法课程学习中遇到困难，特别是动态规划和图论算法部分。学生能够理解课堂内容，但在作业和实践环节遇到障碍。学习方法不当和实践不足是主要原因，建议加强算法基础训练，参加学习小组互相讨论，增加课后练习时间。学生表示会调整学习方法，建议两周后跟进学习情况。"
+      };
+    }
+    
+    // 初始化页面时的额外功能
+    document.addEventListener('DOMContentLoaded', function() {
+      // 字数统计功能
+      const talkContent = document.getElementById('talkContent');
+      const charCount = document.getElementById('charCount');
+      
+      if(talkContent && charCount) {
+        talkContent.addEventListener('input', function() {
+          charCount.textContent = this.value.length;
+        });
+      }
+      
+      // 初始化子菜单（当前页面是谈心谈话页面，所以不默认展开学生信息子菜单）
+      const studentInfoMenu = document.getElementById('studentInfoSubmenu');
+      if (studentInfoMenu) {
+        studentInfoMenu.style.display = 'none';
+        const studentInfoMenuArrow = document.getElementById('studentInfoArrow');
+        if (studentInfoMenuArrow) {
+          studentInfoMenuArrow.classList.remove('fa-chevron-up');
+          studentInfoMenuArrow.classList.add('fa-chevron-down');
+        }
+      }
+      
+      // 添加淡入动画类
+      document.head.insertAdjacentHTML('beforeend', `
+        <style>
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+          }
+        </style>
+      `);
+      
+
+
+      // 模拟文件上传后启用转换按钮
+      const uploadBtn = document.querySelector('#newTalkDialog .border-blue-300');
+      const convertBtn = document.getElementById('convertToText');
+      
+      if(uploadBtn && convertBtn) {
+        uploadBtn.addEventListener('click', function() {
+          // 模拟上传中状态
+          this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>上传中...';
+          this.disabled = true;
+          
+          // 模拟文件上传完成
+          setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>上传成功';
+            
+            setTimeout(() => {
+              this.innerHTML = '<i class="fas fa-upload mr-2"></i>上传文件';
+              this.disabled = false;
+              
+              // 启用转换按钮
+              convertBtn.disabled = false;
+            }, 1500);
+          }, 1000);
+        });
+      }
+      
+      // 模拟转换功能
+      if(convertBtn) {
+        convertBtn.addEventListener('click', function() {
+          if(!this.disabled) {
+            // 显示转换中状态
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>转换中...';
+            this.disabled = true;
+            
+            // 模拟转换过程
+            setTimeout(() => {
+              const talkContent = document.getElementById('talkContent');
+              talkContent.value = "这是从语音文件转换的文字内容。学生反映最近对算法课程学习感到吃力，尤其是动态规划和图论算法部分，虽然能理解课堂内容，但作业和实践环节遇到困难。";
+              charCount.textContent = talkContent.value.length;
+              
+              // 恢复按钮状态
+              this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>转换成功';
+              
+              setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-file-alt mr-2"></i>将语音转换为文字';
+                this.disabled = false;
+              }, 1500);
+            }, 1500);
+          }
+        });
+      }
+    });
+
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+  </script>
+
+  <!-- 添加待办弹窗 -->
+  <div id="addTodoDialog" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center overflow-auto py-8">
+    <div class="bg-white rounded-lg shadow-xl w-1/4 max-w-md overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-semibold text-lg">新增谈话待办</h3>
+        <button class="text-gray-400 hover:text-gray-600" onclick="closeAddTodoDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 弹窗内容 -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- 选择学生 -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-600 mb-2">选择学生</label>
+          <div class="relative">
+            <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="输入姓名或学号搜索">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 谈话日期 -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-600 mb-2">谈话日期</label>
+          <div class="relative">
+            <input type="date" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <i class="far fa-calendar text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 谈话时间 -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-600 mb-2">谈话时间</label>
+          <div class="relative">
+            <input type="time" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <i class="far fa-clock text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 谈话地点 -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-600 mb-2">谈话地点</label>
+          <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="请输入谈话地点">
+        </div>
+
+        <!-- 备注 -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-600 mb-2">备注</label>
+          <textarea class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm h-20" placeholder="请输入备注信息"></textarea>
+        </div>
+      </div>
+      
+      <!-- 弹窗底部 -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
+        <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md mr-3 hover:bg-gray-200 transition-all duration-200" onclick="closeAddTodoDialog()">
+          取消
+        </button>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all duration-200" onclick="submitAddTodo()">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 

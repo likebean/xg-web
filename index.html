@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 工作台</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px; /* 宽度增加到400px */
+      background-color: #fff; /* 与菜单区域一致的背景色 */
+    }
+    .system-logo {
+      height: 40px;
+      margin: 10px 0;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+    .dimension-tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1rem;
+    }
+    .dimension-tab {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .dimension-tab.active {
+      border-bottom-color: #3b82f6;
+      color: #3b82f6;
+      font-weight: 500;
+    }
+    .role-selector {
+      margin-bottom: 1rem;
+    }
+    .role-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      background-color: #f3f4f6;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      transition: all 0.2s;
+    }
+    .role-btn.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+    }
+    .trend-up {
+      color: #10b981;
+    }
+    .trend-down {
+      color: #ef4444;
+    }
+    .trend-neutral {
+      color: #9ca3af;
+    }
+    
+    /* 添加指标趋势图样式 */
+    .trend-chart {
+      height: 40px;
+      margin-top: 8px;
+    }
+    
+    /* 分布图样式 */
+    .mini-distribution-chart {
+      height: 35px;
+      margin-top: 4px;
+    }
+    
+    /* 日程日历样式 */
+    .calendar-wrapper {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 16px;
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    
+    .calendar-weekday {
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+      padding: 4px;
+    }
+    
+    .calendar-day {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .calendar-day:hover {
+      background-color: #f3f4f6;
+    }
+    
+    .calendar-day.today {
+      background-color: #e6f2ff;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+    
+    .calendar-day.has-event:after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      width: 4px;
+      height: 4px;
+      background: #3b82f6;
+      border-radius: 50%;
+    }
+    
+    .calendar-day.has-urgent:after {
+      background: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item active px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，可展开下拉菜单 -->
+          <li class="menu-item px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1">
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">工作台</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 欢迎标语 -->
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">早安，王老师，开始您一天的工作吧！</h1>
+              <p class="text-gray-500 mt-1">今日晴，20°C - 32°C</p>
+            </div>
+            <div class="text-4xl">😊</div>
+          </div>
+
+          <!-- 日程待办 - 移到上面 -->
+          <div class="mb-10">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-base font-semibold text-gray-800">日程待办</h2>
+              <div class="flex items-center">
+                <span class="text-gray-500 mr-2">完成率 35%</span>
+                <span class="text-gray-500">本周</span>
+                <i class="fas fa-chevron-down ml-2 text-gray-500"></i>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6">
+              <!-- 日程日历 -->
+              <div class="calendar-wrapper">
+                <div class="calendar-header">
+                  <button class="text-gray-500"><i class="fas fa-chevron-left"></i></button>
+                  <h3 class="font-medium">2024年7月</h3>
+                  <button class="text-gray-500"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid">
+                  <div class="calendar-weekday">日</div>
+                  <div class="calendar-weekday">一</div>
+                  <div class="calendar-weekday">二</div>
+                  <div class="calendar-weekday">三</div>
+                  <div class="calendar-weekday">四</div>
+                  <div class="calendar-weekday">五</div>
+                  <div class="calendar-weekday">六</div>
+                  
+                  <div class="calendar-day text-gray-300">30</div>
+                  <div class="calendar-day">1</div>
+                  <div class="calendar-day">2</div>
+                  <div class="calendar-day">3</div>
+                  <div class="calendar-day">4</div>
+                  <div class="calendar-day">5</div>
+                  <div class="calendar-day">6</div>
+                  
+                  <div class="calendar-day">7</div>
+                  <div class="calendar-day">8</div>
+                  <div class="calendar-day">9</div>
+                  <div class="calendar-day has-event">10</div>
+                  <div class="calendar-day">11</div>
+                  <div class="calendar-day has-urgent">12</div>
+                  <div class="calendar-day">13</div>
+                  
+                  <div class="calendar-day">14</div>
+                  <div class="calendar-day today">15</div>
+                  <div class="calendar-day has-event">16</div>
+                  <div class="calendar-day">17</div>
+                  <div class="calendar-day has-event">18</div>
+                  <div class="calendar-day">19</div>
+                  <div class="calendar-day">20</div>
+                  
+                  <div class="calendar-day">21</div>
+                  <div class="calendar-day">22</div>
+                  <div class="calendar-day">23</div>
+                  <div class="calendar-day">24</div>
+                  <div class="calendar-day">25</div>
+                  <div class="calendar-day">26</div>
+                  <div class="calendar-day">27</div>
+                  
+                  <div class="calendar-day">28</div>
+                  <div class="calendar-day">29</div>
+                  <div class="calendar-day">30</div>
+                  <div class="calendar-day">31</div>
+                  <div class="calendar-day text-gray-300">1</div>
+                  <div class="calendar-day text-gray-300">2</div>
+                  <div class="calendar-day text-gray-300">3</div>
+                </div>
+              </div>
+              
+              <!-- 待办列表 -->
+              <div class="data-card bg-white p-0 overflow-hidden">
+                <ul>
+                  <!-- 任务1 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="far fa-clock text-red-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <div class="flex items-center">
+                        <h4 class="text-gray-800 font-medium">高年级学生就业指导座谈会准备</h4>
+                        <span class="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">紧急</span>
+                      </div>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-12 14:00:00</p>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-4 text-orange-500 text-sm font-medium">进行中</span>
+                      <i class="fas fa-ellipsis-v text-gray-400"></i>
+                    </div>
+                  </li>
+                  
+                  <!-- 任务2 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-gray-800 font-medium">新生入学教育方案制定</h4>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-10 11:00:00</p>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-4 text-green-500 text-sm font-medium">已完成</span>
+                      <i class="fas fa-ellipsis-v text-gray-400"></i>
+                    </div>
+                  </li>
+                  
+                  <!-- 任务3 -->
+                  <li class="border-b border-gray-100 p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="far fa-clock text-orange-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-gray-800 font-medium">学业预警学生干预计划制定</h4>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-14 09:00:00</p>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-4 text-orange-500 text-sm font-medium">进行中</span>
+                      <i class="fas fa-ellipsis-v text-gray-400"></i>
+                    </div>
+                  </li>
+                  
+                  <!-- 任务4 -->
+                  <li class="p-4 flex items-center">
+                    <div class="w-8 h-8 flex items-center justify-center mr-3">
+                      <i class="far fa-calendar text-blue-500"></i>
+                    </div>
+                    <div class="flex-1">
+                      <h4 class="text-gray-800 font-medium">心理预警学生回访</h4>
+                      <p class="text-gray-500 text-sm mt-1">2024-07-18 10:30:00</p>
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-4 text-blue-500 text-sm font-medium">未开始</span>
+                      <i class="fas fa-ellipsis-v text-gray-400"></i>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 谈心谈话统计 - 删除此标题 -->
+          
+            <!-- 谈心谈话总时长 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">谈心谈话总时长</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-blue-600">328<span class="text-sm ml-1">小时</span></div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>12.5%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-blue-600">+5.3%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkTotalTimeMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkTotalTimeDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 谈心谈话覆盖率 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">谈心谈话覆盖率</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-green-600">92%</div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>4.2%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-green-600">+1.5%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkCoverageMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkCoverageDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 谈话平均时间 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">谈话平均时间</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-blue-600">35<span class="text-sm ml-1">分钟</span></div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>6.3%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-blue-600">+2.1%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkAvgTimeMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="talkAvgTimeDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 生均谈话时长 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">生均谈话时长</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-blue-600">1.2<span class="text-sm ml-1">小时</span></div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>8.1%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-blue-600">+3.4%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="perStudentTimeMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="perStudentTimeDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 平均谈话次数 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">平均谈话次数</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-blue-600">2.4<span class="text-sm ml-1">次</span></div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>10.2%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-blue-600">+6.7%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="avgTalkCountMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="avgTalkCountDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          
+          <!-- 预警统计 - 删除此标题 -->
+          
+            <!-- 预警总量 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">预警总量</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-orange-500">48</div>
+                    <div class="trend-indicator trend-down">
+                      <i class="fas fa-arrow-down mr-1"></i>
+                      <span>15.3%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-red-500">+3.2%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningTotalMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningTotalDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 待处理预警 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">待处理预警</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-red-500">12</div>
+                    <div class="trend-indicator trend-neutral">
+                      <i class="fas fa-minus mr-1"></i>
+                      <span>0.0%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-red-500">+2.0%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="pendingWarningMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="pendingWarningDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 预警处理率 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">预警处理率</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-green-600">75%</div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>5.2%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-green-600">+1.8%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningProcessRateMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningProcessRateDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 预警解决率 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h3 class="text-lg font-medium text-gray-800 mb-4">预警解决率</h3>
+              
+              <div class="grid grid-cols-3 gap-6">
+                <!-- 本学期数据 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">本学期数据</h4>
+                  <div class="flex justify-between items-end">
+                    <div class="text-2xl font-bold text-green-600">82%</div>
+                    <div class="trend-indicator trend-up">
+                      <i class="fas fa-arrow-up mr-1"></i>
+                      <span>7.4%</span>
+                      <span class="text-gray-400 ml-1">同比</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">环比上月 <span class="text-green-600">+3.5%</span></div>
+                </div>
+                
+                <!-- 月度数据曲线图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">月度数据趋势</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningResolveRateMonthly"></canvas>
+                  </div>
+                </div>
+                
+                <!-- 下辖单位分布图 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                  <h4 class="text-gray-500 text-sm mb-2">下辖单位分布</h4>
+                  <div style="height: 150px;">
+                    <canvas id="warningResolveRateDistribution"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          <!-- 日程待办 - 已移到上面 -->
+        </main>
+      
+        <!-- 右侧智能助手区域 - 保留原有实现 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">工作建议</h4>
+              <p class="text-sm text-gray-700">根据您的工作面板，我为您提供以下建议：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 您有2项正在进行中的任务，建议优先处理"高年级学生就业指导座谈会准备"</li>
+                <li>• 本周预计有5名学生需要谈心谈话，可以安排在明后两天进行</li>
+                <li>• 有3名学生出现学业预警，建议及时干预</li>
+                <li>• 周报需要在周五前完成撰写，可以使用助手帮您生成初稿</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble user p-3">
+                <p class="text-sm">我最近的工作计划是什么？</p>
+              </div>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700">您近期有3项待办任务：<br>1. 高年级学生就业指导座谈会准备<br>2. 新生入学教育方案制定（已完成）<br>3. 学业预警学生干预计划制定<br><br>此外，您还有5个学生需要进行谈心谈话，建议本周安排时间完成。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">我今天有哪些工作？</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">本周谈心谈话？</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">预警分析</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">生成报告</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化所有月度趋势图表
+      initMonthlyChart('talkTotalTimeMonthly', '谈心谈话总时长', '#3b82f6');
+      initMonthlyChart('talkCoverageMonthly', '谈心谈话覆盖率', '#10b981');
+      initMonthlyChart('talkAvgTimeMonthly', '谈话平均时间', '#3b82f6');
+      initMonthlyChart('perStudentTimeMonthly', '生均谈话时长', '#3b82f6');
+      initMonthlyChart('avgTalkCountMonthly', '平均谈话次数', '#3b82f6');
+      initMonthlyChart('warningTotalMonthly', '预警总量', '#ef4444');
+      initMonthlyChart('pendingWarningMonthly', '待处理预警', '#ef4444');
+      initMonthlyChart('warningProcessRateMonthly', '预警处理率', '#10b981');
+      initMonthlyChart('warningResolveRateMonthly', '预警解决率', '#10b981');
+      
+      // 初始化所有分布图表
+      initDistributionChart('talkTotalTimeDistribution', '谈心谈话总时长', '#3b82f6');
+      initDistributionChart('talkCoverageDistribution', '谈心谈话覆盖率', '#10b981');
+      initDistributionChart('talkAvgTimeDistribution', '谈话平均时间', '#3b82f6');
+      initDistributionChart('perStudentTimeDistribution', '生均谈话时长', '#3b82f6');
+      initDistributionChart('avgTalkCountDistribution', '平均谈话次数', '#3b82f6');
+      initDistributionChart('warningTotalDistribution', '预警总量', '#ef4444');
+      initDistributionChart('pendingWarningDistribution', '待处理预警', '#ef4444');
+      initDistributionChart('warningProcessRateDistribution', '预警处理率', '#10b981');
+      initDistributionChart('warningResolveRateDistribution', '预警解决率', '#10b981');
+      
+      // 月度趋势图表初始化函数
+      function initMonthlyChart(elementId, title, color) {
+        const ctx = document.getElementById(elementId).getContext('2d');
+        const months = ['2月', '3月', '4月', '5月', '6月', '7月'];
+        let currentData = [];
+        let lastYearData = [];
+        
+        // 根据指标生成示例数据
+        if (title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率')) {
+          // 百分比类型指标
+          currentData = [82, 85, 87, 88, 90, 92].map(val => val + Math.floor(Math.random() * 6 - 3));
+          lastYearData = currentData.map(val => val - Math.floor(Math.random() * 8 + 2));
+        } else if (title.includes('预警')) {
+          // 预警类型指标
+          currentData = [52, 50, 48, 45, 47, 48].map(val => val + Math.floor(Math.random() * 6 - 3));
+          lastYearData = currentData.map(val => val + Math.floor(Math.random() * 8 + 2));
+        } else {
+          // 其他类型指标
+          currentData = [60, 68, 72, 75, 80, 85].map(val => val + Math.floor(Math.random() * 10 - 5));
+          lastYearData = currentData.map(val => val - Math.floor(Math.random() * 10 + 5));
+        }
+        
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: months,
+            datasets: [
+              {
+                label: '本年度',
+                data: currentData,
+                borderColor: color,
+                backgroundColor: `${color}33`,
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 2
+              },
+              {
+                label: '去年同期',
+                data: lastYearData,
+                borderColor: '#9ca3af',
+                backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 0
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  boxWidth: 12,
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: title.includes('预警总量') || title.includes('待处理预警'),
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              },
+              x: {
+                ticks: {
+                  font: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // 分布图表初始化函数
+      function initDistributionChart(elementId, title, color) {
+        const ctx = document.getElementById(elementId).getContext('2d');
+        const units = ['计算机学院', '物理学院', '经济学院', '文学院', '历史学院'];
+        let data = [];
+        
+        // 根据指标生成示例数据
+        if (title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率')) {
+          // 百分比类型指标
+          data = [95, 88, 91, 87, 84].map(val => val + Math.floor(Math.random() * 6 - 3));
+        } else if (title.includes('预警')) {
+          // 预警类型指标
+          data = [15, 10, 12, 14, 11].map(val => val + Math.floor(Math.random() * 4 - 2));
+        } else {
+          // 其他类型指标
+          data = [85, 65, 78, 48, 45].map(val => val + Math.floor(Math.random() * 10 - 5));
+        }
+        
+        // 排序数据（从大到小）
+        const combinedData = units.map((unit, index) => ({ unit, value: data[index] }));
+        combinedData.sort((a, b) => b.value - a.value);
+        const sortedUnits = combinedData.map(item => item.unit);
+        const sortedData = combinedData.map(item => item.value);
+        
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: sortedUnits,
+            datasets: [
+              {
+                axis: 'y',
+                label: title.includes('覆盖率') || title.includes('处理率') || title.includes('解决率') ? '百分比(%)' : '数值',
+                data: sortedData,
+                backgroundColor: color,
+                borderRadius: 2
+              }
+            ]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                mode: 'index',
+                intersect: false
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  font: {
+                    size: 9
+                  }
+                }
+              },
+              y: {
+                ticks: {
+                  font: {
+                    size: 9
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // 为常见问题添加点击事件
+      const quickQuestions = document.querySelectorAll('.quick-question');
+      quickQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+          const text = this.textContent;
+          console.log('问题已选择:', text);
+        });
+      });
+
+      // 初始化子菜单（当前页面是首页，所以不默认展开学生信息子菜单）
+      const studentInfoMenu = document.getElementById('studentInfoSubmenu');
+      if (studentInfoMenu) {
+        studentInfoMenu.style.display = 'none';
+        const studentInfoMenuArrow = document.getElementById('studentInfoArrow');
+        if (studentInfoMenuArrow) {
+          studentInfoMenuArrow.classList.remove('fa-chevron-up');
+          studentInfoMenuArrow.classList.add('fa-chevron-down');
+        }
+      }
+    });
+
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+  </script>
+</body>
+</html> 

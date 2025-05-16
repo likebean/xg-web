@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 学生统计</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- 引入 ECharts 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px; /* 宽度增加到400px */
+      background-color: #fff; /* 与菜单区域一致的背景色 */
+    }
+    .chart-container {
+      height: 350px;
+      width: 100%;
+    }
+    .stat-card {
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，改为可展开下拉菜单 -->
+          <li class="menu-item active px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1">
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md bg-blue-50 text-blue-600">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">学生统计分析</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 筛选区域 -->
+          <div class="bg-white rounded-lg p-4 shadow-sm mb-6">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold">数据筛选</h3>
+              <div class="flex items-center space-x-3">
+                <div class="relative">
+                  <select id="gradeFilter" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="all">全部年级</option>
+                    <option value="2023">2023级</option>
+                    <option value="2022">2022级</option>
+                    <option value="2021">2021级</option>
+                    <option value="2020">2020级</option>
+                  </select>
+                </div>
+                <div class="relative">
+                  <select id="departmentFilter" class="px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="all">全部院系</option>
+                    <option value="computer">计算机学院</option>
+                    <option value="electronic">电子工程学院</option>
+                    <option value="mechanical">机械工程学院</option>
+                    <option value="foreign">外国语学院</option>
+                    <option value="management">经济管理学院</option>
+                    <option value="civil">土木工程学院</option>
+                    <option value="chemistry">化学化工学院</option>
+                    <option value="material">材料科学学院</option>
+                  </select>
+                </div>
+                <button id="applyFilter" class="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                  <i class="fas fa-filter mr-1"></i>应用筛选
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 图表区域第一行 -->
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <!-- 性别比例分析 -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">性别比例分析</h3>
+                <div class="text-xl font-bold text-gray-800">1.8:1 <span class="text-sm text-gray-500 font-normal">男:女</span></div>
+              </div>
+              <div id="genderChart" class="chart-container" style="height: 320px;"></div>
+            </div>
+
+            <!-- 贫困生比例分析 -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">贫困生比例分析</h3>
+                <div class="text-xl font-bold text-gray-800">12.7% <span class="text-sm text-gray-500 font-normal">493名</span></div>
+              </div>
+              <div id="povertyPieChart" class="chart-container" style="height: 320px;"></div>
+            </div>
+          </div>
+
+          <!-- 图表区域第二行 -->
+          <div class="grid grid-cols-2 gap-6">
+            <!-- 政治面貌分析 -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">政治面貌分析</h3>
+              </div>
+              <div id="politicalChart" class="chart-container" style="height: 320px;"></div>
+            </div>
+            
+            <!-- 生源地分布分析 -->
+            <div class="bg-white rounded-lg shadow-sm p-4">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">生源地分布分析</h3>
+              </div>
+              <div id="regionChart" class="chart-container" style="height: 320px;"></div>
+            </div>
+          </div>
+        </main>
+
+        <!-- 右侧智能助手区域 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">数据洞察</h4>
+              <p class="text-sm text-gray-700">根据当前数据分析，发现以下关键情况：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 2023级学生男女比例较往年更加平衡</li>
+                <li>• 计算机学院贫困生比例高于学校平均水平</li>
+                <li>• 党员数量呈现稳步上升趋势</li>
+                <li>• 少数民族学生比例同比增长8.3%</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble user p-3">
+                <p class="text-sm">哪个专业的男女比例最平衡？</p>
+              </div>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700">根据当前数据，外国语学院的英语专业男女比例最为平衡，接近1:1.1，其次是管理学院的会计专业。理工科专业中，生物工程专业的男女比例相对较为平衡。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">各院系男女比例</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">贫困生学业表现</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">党员分布特点</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">不同年级对比</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+
+    // 初始化所有图表
+    function initCharts() {
+      // 性别比例图表
+      const genderChart = echarts.init(document.getElementById('genderChart'));
+      genderChart.setOption({
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          data: ['男生', '女生']
+        },
+        color: ['#4299e1', '#ed64a6'],
+        series: [
+          {
+            name: '性别比例',
+            type: 'pie',
+            radius: ['50%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: '18',
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data: [
+              { value: 2489, name: '男生' },
+              { value: 1383, name: '女生' }
+            ]
+          }
+        ]
+      });
+
+      // 贫困生比例饼图
+      const povertyPieChart = echarts.init(document.getElementById('povertyPieChart'));
+      povertyPieChart.setOption({
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          data: ['特困生', '一般贫困', '非贫困']
+        },
+        color: ['#fc8181', '#f6ad55', '#90cdf4'],
+        series: [
+          {
+            name: '贫困情况',
+            type: 'pie',
+            radius: '55%',
+            center: ['40%', '50%'],
+            data: [
+              { value: 139, name: '特困生' },
+              { value: 354, name: '一般贫困' },
+              { value: 3379, name: '非贫困' }
+            ],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      });
+
+      // 政治面貌图表
+      const politicalChart = echarts.init(document.getElementById('politicalChart'));
+      politicalChart.setOption({
+        tooltip: {
+          trigger: 'item',
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          data: ['中共党员', '中共预备党员', '共青团员', '其他民主党派', '群众']
+        },
+        color: ['#e53e3e', '#ed8936', '#3182ce', '#805ad5', '#a0aec0'],
+        series: [
+          {
+            name: '政治面貌',
+            type: 'pie',
+            radius: '55%',
+            center: ['40%', '50%'],
+            data: [
+              { value: 329, name: '中共党员' },
+              { value: 148, name: '中共预备党员' },
+              { value: 3062, name: '共青团员' },
+              { value: 42, name: '其他民主党派' },
+              { value: 291, name: '群众' }
+            ],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      });
+
+      // 生源地分布图表
+      const regionChart = echarts.init(document.getElementById('regionChart'));
+      regionChart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        legend: {
+          data: ['学生数量']
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          boundaryGap: [0, 0.01]
+        },
+        yAxis: {
+          type: 'category',
+          data: ['江苏', '浙江', '广东', '山东', '安徽', '河南', '湖北', '其他']
+        },
+        series: [
+          {
+            name: '学生数量',
+            type: 'bar',
+            data: [892, 625, 521, 476, 384, 321, 290, 363],
+            itemStyle: {
+              color: function(params) {
+                var colorList = ['#3182ce', '#4299e1', '#63b3ed', '#90cdf4', '#bee3f8', '#ebf8ff', '#c6f6d5', '#e2e8f0'];
+                return colorList[params.dataIndex];
+              }
+            }
+          }
+        ]
+      });
+
+      // 窗口大小改变时，重置图表大小
+      window.addEventListener('resize', function() {
+        genderChart.resize();
+        povertyPieChart.resize();
+        politicalChart.resize();
+        regionChart.resize();
+      });
+    }
+
+    // 为统计面板选项卡添加点击事件
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化显示子菜单
+      const submenu = document.getElementById('studentInfoSubmenu');
+      if (submenu) {
+        submenu.style.display = 'block';
+        const arrow = document.getElementById('studentInfoArrow');
+        if (arrow) {
+          arrow.classList.remove('fa-chevron-down');
+          arrow.classList.add('fa-chevron-up');
+        }
+      }
+
+      // 初始化图表
+      initCharts();
+
+      // 绑定筛选器按钮事件
+      document.getElementById('applyFilter').addEventListener('click', function() {
+        const gradeValue = document.getElementById('gradeFilter').value;
+        const departmentValue = document.getElementById('departmentFilter').value;
+        
+        // 这里应该是实际的筛选逻辑，示例中仅打印值
+        console.log('应用筛选:', '年级 -', gradeValue, '院系 -', departmentValue);
+        
+        // 更新图表数据（示例）
+        updateChartsWithFilter(gradeValue, departmentValue);
+      });
+    });
+
+    // 根据筛选条件更新图表数据
+    function updateChartsWithFilter(grade, department) {
+      // 实际应用中这里需要请求后端API获取筛选后的数据
+      // 这里仅作示例，提示用户筛选已应用
+      alert('已应用筛选：' + (grade !== 'all' ? grade + '级' : '全部年级') + ' - ' + 
+            (department !== 'all' ? getDepartmentName(department) : '全部院系'));
+    }
+    
+    // 获取院系名称
+    function getDepartmentName(code) {
+      const departments = {
+        'computer': '计算机学院',
+        'electronic': '电子工程学院',
+        'mechanical': '机械工程学院',
+        'foreign': '外国语学院',
+        'management': '经济管理学院',
+        'civil': '土木工程学院',
+        'chemistry': '化学化工学院',
+        'material': '材料科学学院'
+      };
+      return departments[code] || code;
+    }
+
+    // 为常见问题添加点击事件
+    const quickQuestions = document.querySelectorAll('.quick-question');
+    quickQuestions.forEach(question => {
+      question.addEventListener('click', function() {
+        const text = this.textContent;
+        console.log('问题已选择:', text);
+      });
+    });
+  </script>
+</body>
+</html> 

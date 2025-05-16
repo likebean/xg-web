@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 知识库管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px;
+      background-color: #fff;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    .knowledge-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，可展开下拉菜单 -->
+          <li class="menu-item px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1 hidden">
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item active px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center px-6 py-3">
+          <!-- 左侧页面标题 -->
+          <div>
+            <h1 class="text-lg font-medium">知识库管理</h1>
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <!-- 顶部导航标签 -->
+          <div class="mb-6 flex items-center justify-between">
+            <div class="flex space-x-4">
+              <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">知识库总览</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">政策文件</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">操作指南</button>
+              <button class="bg-white text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition">问答库</button>
+            </div>
+            <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+              <i class="fas fa-plus mr-2"></i>添加文档
+            </button>
+          </div>
+          
+          <!-- 知识库统计卡片 -->
+          <div class="grid grid-cols-4 gap-6 mb-6">
+            <!-- 文档总数 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-file-alt text-blue-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm">文档总数</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2">286</span>
+                <span class="text-green-500 text-sm mb-1">+12</span>
+              </div>
+            </div>
+            
+            <!-- 政策文件 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-gavel text-purple-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm">政策文件</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2">84</span>
+                <span class="text-green-500 text-sm mb-1">+3</span>
+              </div>
+            </div>
+            
+            <!-- 操作指南 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-book-open text-yellow-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm">操作指南</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2">126</span>
+                <span class="text-green-500 text-sm mb-1">+5</span>
+              </div>
+            </div>
+            
+            <!-- 问答库 -->
+            <div class="data-card bg-white p-6">
+              <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                  <i class="fas fa-question-circle text-green-500"></i>
+                </div>
+                <h3 class="text-gray-500 text-sm">问答库</h3>
+              </div>
+              <div class="flex items-end">
+                <span class="text-2xl font-bold mr-2">76</span>
+                <span class="text-green-500 text-sm mb-1">+4</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 知识库使用情况 -->
+          <div class="grid grid-cols-2 gap-6 mb-6">
+            <div class="data-card bg-white p-6">
+              <h3 class="text-base font-medium mb-4">知识库使用情况</h3>
+              <canvas id="usageChart" height="250"></canvas>
+            </div>
+            
+            <div class="data-card bg-white p-6">
+              <h3 class="text-base font-medium mb-4">热门检索文档</h3>
+              <div class="space-y-4">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 font-medium mr-3">1</div>
+                  <div class="flex-1">
+                    <h4 class="text-gray-800 font-medium">学生心理危机干预指南</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="knowledge-tag bg-purple-100 text-purple-700">政策文件</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-eye mr-1"></i> 368</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-clock mr-1"></i> 2024-06-15</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-medium mr-3">2</div>
+                  <div class="flex-1">
+                    <h4 class="text-gray-800 font-medium">学籍异动处理流程</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="knowledge-tag bg-yellow-100 text-yellow-700">操作指南</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-eye mr-1"></i> 296</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-clock mr-1"></i> 2024-05-28</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-medium mr-3">3</div>
+                  <div class="flex-1">
+                    <h4 class="text-gray-800 font-medium">如何处理学生申诉问题</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="knowledge-tag bg-green-100 text-green-700">问答库</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-eye mr-1"></i> 245</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-clock mr-1"></i> 2024-06-02</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-medium mr-3">4</div>
+                  <div class="flex-1">
+                    <h4 class="text-gray-800 font-medium">奖学金评定标准与流程</h4>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span class="knowledge-tag bg-purple-100 text-purple-700">政策文件</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-eye mr-1"></i> 218</span>
+                      <span class="flex items-center ml-3"><i class="fas fa-clock mr-1"></i> 2024-05-20</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 最近更新文档 -->
+          <div class="data-card bg-white overflow-hidden">
+            <div class="p-4 border-b flex justify-between items-center">
+              <h3 class="font-medium text-gray-800">最近更新文档</h3>
+              <button class="text-blue-500 text-sm">查看全部</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gray-50 text-left">
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">文档名称</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">类别</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">标签</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">更新时间</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">更新人</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">阅读量</th>
+                    <th class="py-3 px-4 text-gray-500 font-medium text-sm">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <i class="far fa-file-alt text-blue-500 mr-2"></i>
+                        <span>2024年学生思想引领工作方案</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">政策文件</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-1">
+                        <span class="knowledge-tag bg-blue-100 text-blue-700">思想引领</span>
+                        <span class="knowledge-tag bg-green-100 text-green-700">工作计划</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">2024-07-05 14:30</td>
+                    <td class="py-3 px-4">张主任</td>
+                    <td class="py-3 px-4">86</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-500 hover:text-red-700">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <i class="far fa-file-alt text-yellow-500 mr-2"></i>
+                        <span>辅导员谈心谈话技巧指南</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">操作指南</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-1">
+                        <span class="knowledge-tag bg-yellow-100 text-yellow-700">谈心谈话</span>
+                        <span class="knowledge-tag bg-purple-100 text-purple-700">辅导员</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">2024-07-03 10:15</td>
+                    <td class="py-3 px-4">李老师</td>
+                    <td class="py-3 px-4">142</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-500 hover:text-red-700">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  
+                  <tr class="border-t border-gray-100">
+                    <td class="py-3 px-4">
+                      <div class="flex items-center">
+                        <i class="far fa-file-alt text-green-500 mr-2"></i>
+                        <span>如何应对学生考试焦虑</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">问答库</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-1">
+                        <span class="knowledge-tag bg-red-100 text-red-700">心理健康</span>
+                        <span class="knowledge-tag bg-blue-100 text-blue-700">考试应对</span>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">2024-07-02 16:45</td>
+                    <td class="py-3 px-4">王老师</td>
+                    <td class="py-3 px-4">98</td>
+                    <td class="py-3 px-4">
+                      <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-500 hover:text-red-700">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-4 border-t flex justify-center">
+              <button class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition text-sm">
+                加载更多
+              </button>
+            </div>
+          </div>
+        </main>
+        
+        <!-- 右侧智能助手区域 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">工作建议</h4>
+              <p class="text-sm text-gray-700">根据知识库使用情况分析，我为您提供以下建议：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 心理健康类文档查询量增长显著，建议进一步丰富相关内容</li>
+                <li>• 有5篇操作指南文档超过6个月未更新，需要检查其时效性</li>
+                <li>• 辅导员经常查询的谈话技巧文档可考虑制作培训视频</li>
+                <li>• 学籍管理类问题检索量上升，可以组织专题知识培训</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700"></p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">知识库检索</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">热点内容分析</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">知识更新建议</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">文档创建帮助</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 图表初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化子菜单（当前页面是知识库管理，所以不默认展开学生信息子菜单）
+      const studentInfoMenu = document.getElementById('studentInfoSubmenu');
+      if (studentInfoMenu) {
+        studentInfoMenu.style.display = 'none';
+        const studentInfoMenuArrow = document.getElementById('studentInfoArrow');
+        if (studentInfoMenuArrow) {
+          studentInfoMenuArrow.classList.remove('fa-chevron-up');
+          studentInfoMenuArrow.classList.add('fa-chevron-down');
+        }
+      }
+      
+      // 知识库使用情况
+      const usageCtx = document.getElementById('usageChart').getContext('2d');
+      new Chart(usageCtx, {
+        type: 'line',
+        data: {
+          labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月'],
+          datasets: [
+            {
+              label: '总访问量',
+              data: [1200, 1350, 1800, 2200, 2500, 2800, 3100],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: '政策文件',
+              data: [400, 450, 550, 700, 800, 850, 950],
+              borderColor: '#8b5cf6',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderDash: [5, 5],
+              fill: false
+            },
+            {
+              label: '操作指南',
+              data: [500, 550, 750, 950, 1050, 1200, 1300],
+              borderColor: '#eab308',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderDash: [5, 5],
+              fill: false
+            },
+            {
+              label: '问答库',
+              data: [300, 350, 500, 550, 650, 750, 850],
+              borderColor: '#10b981',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderDash: [5, 5],
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                drawBorder: false,
+                color: 'rgba(200, 200, 200, 0.3)',
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    });
+    
+    // 子菜单切换函数
+    function toggleSubmenu(submenuId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById('studentInfoArrow');
+      
+      if (submenu.style.display === 'none' || submenu.style.display === '') {
+        submenu.style.display = 'block';
+        arrow.classList.remove('fa-chevron-down');
+        arrow.classList.add('fa-chevron-up');
+      } else {
+        submenu.style.display = 'none';
+        arrow.classList.remove('fa-chevron-up');
+        arrow.classList.add('fa-chevron-down');
+      }
+    }
+  </script>
+</body>
+</html> 

@@ -1,0 +1,2770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI学工 - 学生详情</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #f6f8fa;
+      font-size: 1rem; /* 统一字体大小 */
+    }
+    /* 统一字体大小规范 */
+    .text-xs, .text-sm, .quick-question, .student-tag, .knowledge-tag {
+      font-size: 0.875rem !important; /* 统一小号字体大小 */
+    }
+    h1, h2, h3, h4, h5, h6, .text-lg, .text-xl, .text-2xl {
+      font-size: 1rem !important; /* 统一标题字体大小 */
+    }
+    .text-2xl {
+      font-size: 1.25rem !important; /* 允许大号字体稍大一些 */
+    }
+    .sidebar {
+      background-color: #fff;
+      width: 220px;
+      transition: all 0.3s;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .menu-item {
+      border-radius: 8px;
+      margin: 5px 10px;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      background-color: #f0f7ff;
+    }
+    .menu-item.active {
+      background-color: #e6f2ff;
+      color: #3b82f6;
+    }
+    .data-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s;
+    }
+    .data-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    .assistant-area {
+      width: 400px; /* 宽度增加到400px */
+      background-color: #fff; /* 与菜单区域一致的背景色 */
+    }
+    .system-logo {
+      height: 40px;
+      margin: 10px 0;
+    }
+    .chat-bubble {
+      border-radius: 14px;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background-color: #3b82f6;
+      color: white;
+      margin-left: auto;
+    }
+    .chat-bubble.assistant {
+      background-color: #f0f7ff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .quick-question {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-question:hover {
+      background-color: #f0f7ff;
+      color: #3b82f6;
+    }
+    .assistant-dialog {
+      height: 70%; /* 对话区域占据更多空间 */
+    }
+    .common-questions {
+      margin-bottom: 0.5rem;
+    }
+    /* 侧边导航样式 */
+    .side-nav {
+      position: sticky;
+      top: 2rem;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(237, 242, 247, 0.8);
+    }
+    
+    .side-nav-item {
+      position: relative;
+      padding-left: 15px;
+    }
+    
+    .side-nav-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: #e5e7eb;
+    }
+    
+    .side-nav-item.active::before {
+      background-color: #1d4ed8;
+    }
+    
+    .side-nav-item a {
+      font-weight: 500;
+    }
+    
+    .side-nav-item.active a {
+      color: #1d4ed8;
+    }
+    
+    /* 滚动到视图时高亮对应的侧边导航项 */
+    .section-highlight:target ~ .side-nav .side-nav-item a[href="#section-highlight"] {
+      color: #3b82f6;
+    }
+    
+    /* 信息卡片间距 */
+    .info-section {
+      scroll-margin-top: 2rem;
+    }
+    
+    /* 美化返回按钮 */
+    .back-btn {
+      display: flex;
+      align-items: center;
+      background-color: #f0f7ff;
+      color: #3b82f6;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s;
+      border: 1px solid #e6f2ff;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+    }
+    
+    .back-btn:hover {
+      background-color: #e6f2ff;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(59, 130, 246, 0.15);
+    }
+    
+    /* 信息卡片统一样式 */
+    .info-card {
+      background-color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.25rem;
+      border: 1px solid rgba(237, 242, 247, 0.8);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* 紧凑的信息展示样式 */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    
+    .info-item {
+      margin-bottom: 0.5rem;
+    }
+    
+    .label {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+    
+    .value {
+      font-size: 0.875rem;
+      color: #1e293b;
+    }
+    
+    /* 美化信息卡片标题 */
+    .info-card h3 {
+      color: #1e40af;
+      font-weight: 600;
+    }
+    
+    /* 美化表格样式 */
+    .compact-table {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .compact-table th {
+      background-color: #f8fafc;
+      font-size: 0.75rem;
+      color: #475569;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 0.5rem;
+    }
+    
+    .compact-table td {
+      font-size: 0.875rem;
+      color: #334155;
+      padding: 0.5rem;
+    }
+    
+    .compact-table tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+  <!-- 主容器 -->
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧菜单 -->
+    <div class="sidebar flex flex-col shadow-sm">
+      <!-- Logo -->
+      <div class="flex items-center justify-center py-4">
+        <div class="flex items-center">
+          <i class="fas fa-robot text-blue-500 text-2xl mr-2"></i>
+          <span class="font-bold text-lg text-blue-600">AI学工</span>
+        </div>
+      </div>
+      
+      <!-- 菜单栏 -->
+      <div class="flex-1 overflow-y-auto px-3 py-4">
+        <ul>
+          <li class="menu-item px-4 py-3">
+            <a href="index.html" class="flex items-center">
+              <i class="fas fa-home text-lg w-6"></i>
+              <span class="ml-3">首页</span>
+            </a>
+          </li>
+          <!-- 学生信息一级菜单，可展开下拉菜单 -->
+          <li class="menu-item active px-4 py-2">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleSubmenu('studentInfoSubmenu')">
+              <div class="flex items-center">
+                <i class="fas fa-user-graduate text-lg w-6"></i>
+                <span class="ml-3">学生信息</span>
+              </div>
+              <i class="fas fa-chevron-down text-sm text-gray-500" id="studentInfoArrow"></i>
+            </div>
+            <!-- 子菜单 -->
+            <ul id="studentInfoSubmenu" class="ml-8 mt-2 space-y-1">
+              <li class="py-2 px-2 rounded-md bg-blue-50 text-blue-600">
+                <a href="student-info.html" class="block">
+                  <i class="fas fa-search text-sm mr-2"></i>学生查询
+                </a>
+              </li>
+              <li class="py-2 px-2 rounded-md hover:bg-gray-100">
+                <a href="student-statistics.html" class="block">
+                  <i class="fas fa-chart-pie text-sm mr-2"></i>学生统计
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="talk.html" class="flex items-center">
+              <i class="fas fa-comments text-lg w-6"></i>
+              <span class="ml-3">谈心谈话</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="early-warning.html" class="flex items-center">
+              <i class="fas fa-exclamation-triangle text-lg w-6"></i>
+              <span class="ml-3">预警管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="knowledge-base.html" class="flex items-center">
+              <i class="fas fa-book text-lg w-6"></i>
+              <span class="ml-3">知识库管理</span>
+            </a>
+          </li>
+          <li class="menu-item px-4 py-3">
+            <a href="settings.html" class="flex items-center">
+              <i class="fas fa-cog text-lg w-6"></i>
+              <span class="ml-3">系统设置</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white shadow-sm">
+        <div class="flex items-center justify-between px-6 py-3">
+          <!-- 左侧页面标题和返回按钮 - 位置已交换 -->
+          <div class="flex items-center">
+            <h1 class="text-lg font-medium mr-4">学生详情</h1>
+            <a href="student-info.html" class="back-btn">
+              <i class="fas fa-arrow-left mr-2"></i> 返回学生列表
+            </a>
+          </div>
+          
+          <!-- 右侧操作按钮 -->
+          <div class="flex space-x-3">
+            <!-- 删除打印和导出按钮 -->
+          </div>
+        </div>
+      </header>
+
+      <!-- 主内容和助手区域的容器 -->
+      <div class="flex flex-1 overflow-hidden">
+        <!-- 内容区域 -->
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <div class="flex flex-col">
+            <!-- 学生个人信息卡片 -->
+            <div class="info-card p-5 mb-4">
+              <div class="flex">
+                <!-- 头像和基础信息 - 更新了头像链接并美化 -->
+                <div class="flex-shrink-0 mr-6">
+                  <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="学生头像" class="w-28 h-28 rounded-lg shadow-sm object-cover border-2 border-blue-100">
+                </div>
+                
+                <!-- 学生基本信息汇总 -->
+                <div class="flex-1">
+                  <div class="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 class="text-xl font-bold student-name">张三</h3>
+                      <p class="text-gray-500 text-sm student-id">2023001001</p>
+                    </div>
+                  </div>
+                  
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <p class="label">学院</p>
+                      <p class="value">计算机学院</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">班级</p>
+                      <p class="value">计算机2301</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">辅导员</p>
+                      <p class="value">王老师</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">入学日期</p>
+                      <p class="value">2023-09-01</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">联系电话</p>
+                      <p class="value">13812345678</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">邮箱</p>
+                      <p class="value">zhangsan@example.com</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">宿舍</p>
+                      <p class="value">1号楼 - 308室 - 1床</p>
+                    </div>
+                    <div class="info-item">
+                      <p class="label">GPA</p>
+                      <p class="value">3.8</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 快捷操作按钮 -->
+              <div class="flex mt-4 pt-4 border-t">
+                <button class="flex-1 flex items-center justify-center py-2 text-blue-600 hover:bg-blue-50 rounded-md text-sm" onclick="showNewTalkDialog()">
+                  <i class="fas fa-comment-alt mr-1"></i> 发起谈话
+                </button>
+                <button class="flex-1 flex items-center justify-center py-2 text-blue-600 hover:bg-blue-50 rounded-md text-sm">
+                  <i class="fas fa-print mr-1"></i> 打印
+                </button>
+              </div>
+            </div>
+
+            <!-- 谈心谈话区域 -->
+            <div id="talk-info" class="info-card p-5 mb-4 info-section hidden">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">谈心谈话记录</h3>
+                <!-- 添加收起/展开按钮 -->
+                <button id="toggleTalkInfoBtn" class="text-blue-500 text-sm flex items-center" onclick="toggleTalkInfo()">
+                  <i class="fas fa-chevron-up mr-1"></i><span>收起</span>
+                </button>
+              </div>
+              
+              <!-- 谈话记录内容区域 -->
+              <div id="talkInfoContent">
+                <!-- AI分析区域 -->
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                  <div class="flex items-start">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <i class="fas fa-robot text-blue-500"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-blue-800 font-medium mb-2">AI 分析与建议</h4>
+                      <p class="text-sm text-gray-700 mb-2">
+                        张三同学本学期已进行3次谈话，主要围绕学业规划和心理状况。从谈话内容看，学生对专业选择有一定困惑，建议重点关注其学习兴趣引导。
+                      </p>
+                      <p class="text-sm text-gray-700">
+                        <span class="font-medium">下次谈话建议：</span> 可聚焦职业发展规划，帮助学生明确未来方向，增强学习动力。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 谈话记录列表 -->
+                <div class="mb-4">
+                  <div class="space-y-4">
+                    <!-- 谈话记录1 -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                      <div class="flex justify-end mb-2">
+                        <span class="text-sm text-gray-500">2024-07-01 10:30</span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-2">
+                        学生反映对算法课程学习吃力，讨论了学习方法和辅导资源。
+                      </p>
+                      <div class="flex justify-end">
+                        <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                      </div>
+                    </div>
+                    
+                    <!-- 谈话记录2 -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                      <div class="flex justify-end mb-2">
+                        <span class="text-sm text-gray-500">2024-06-15 14:20</span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-2">
+                        讨论了学生未来的职业规划，推荐了相关实习和项目经验积累方向。
+                      </p>
+                      <div class="flex justify-end">
+                        <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                      </div>
+                    </div>
+                    
+                    <!-- 谈话记录3 -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                      <div class="flex justify-end mb-2">
+                        <span class="text-sm text-gray-500">2024-03-10 09:00</span>
+                      </div>
+                      <p class="text-sm text-gray-600 mb-2">
+                        新学期入学适应情况交流，学生反映宿舍关系良好，已适应大学学习节奏。
+                      </p>
+                      <div class="flex justify-end">
+                        <button class="text-blue-500 text-sm" onclick="showTalkDetail()">查看详情</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 查看全部按钮 -->
+                  <div class="mt-4 text-center">
+                    <button class="text-blue-500 text-sm flex items-center justify-center mx-auto">
+                      <span>查看全部谈话记录</span>
+                      <i class="fas fa-chevron-down ml-1"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 信息导航和内容区 -->
+            <div class="flex space-x-4">
+              <!-- 左侧导航 -->
+              <div class="w-40 flex-shrink-0">
+                <div class="side-nav bg-white p-4">
+                  <h3 class="font-medium text-gray-700 mb-3">信息导航</h3>
+                  <ul class="space-y-2">
+                    <li class="side-nav-item active">
+                      <a href="#basic-info" class="block py-2 px-3 text-sm">基本信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#student-work-info" class="block py-2 px-3 text-sm">学工信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#track-info" class="block py-2 px-3 text-sm">轨迹信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#academic-info" class="block py-2 px-3 text-sm">教务信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#party-info" class="block py-2 px-3 text-sm">党团信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#asset-info" class="block py-2 px-3 text-sm">资产信息</a>
+                    </li>
+                    <li class="side-nav-item">
+                      <a href="#finance-info" class="block py-2 px-3 text-sm">财务信息</a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <!-- 右侧内容区 -->
+              <div class="flex-1">
+                <!-- 基本信息 -->
+                <section id="basic-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">基本信息</h2>
+                  
+                  <!-- 学生基本信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">学生基本信息</h3>
+                    
+                    <!-- 基本信息 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">基本信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">学号</div>
+                          <div class="value">211901234</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">姓名</div>
+                          <div class="value">王明阳</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">姓名拼音</div>
+                          <div class="value">Wang Mingyang</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">曾用名</div>
+                          <div class="value">-</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">性别</div>
+                          <div class="value">男</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">民族</div>
+                          <div class="value">汉族</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">国家地区/国籍</div>
+                          <div class="value">中国</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">港澳台侨</div>
+                          <div class="value">否</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">政治面貌</div>
+                          <div class="value">共青团员</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">婚姻状态</div>
+                          <div class="value">未婚</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">出生日期</div>
+                          <div class="value">2003-05-12</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">证件号码</div>
+                          <div class="value">3201021*********</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">生源地</div>
+                          <div class="value">江苏南京</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">籍贯</div>
+                          <div class="value">江苏南京</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">原户口性质</div>
+                          <div class="value">城镇户口</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">户口所在地</div>
+                          <div class="value">江苏省南京市玄武区</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 学籍信息 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">学籍信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">学籍状态</div>
+                          <div class="value">在籍</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">现在年级</div>
+                          <div class="value">2021级</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">培养方式</div>
+                          <div class="value">普通全日制</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">院系（大类）</div>
+                          <div class="value">计算机科学与技术系</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">专业</div>
+                          <div class="value">计算机科学与技术</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">班级</div>
+                          <div class="value">1班</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">学制</div>
+                          <div class="value">4年</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 入学信息 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">入学信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">入学方式</div>
+                          <div class="value">普通入学</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">入学时间</div>
+                          <div class="value">2021-09-01</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">招生类型</div>
+                          <div class="value">统招本科</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">入学批次</div>
+                          <div class="value">本科一批</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 联系方式 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">联系方式</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">手机号码</div>
+                          <div class="value">1881234****</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">电子邮箱</div>
+                          <div class="value">wmy@smail.nju.edu.cn</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">微信号</div>
+                          <div class="value">wmy2003</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">QQ号</div>
+                          <div class="value">1234567890</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 家庭信息 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">家庭信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">家庭住址</div>
+                          <div class="value">江苏省南京市玄武区北京东路18号</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">家庭电话</div>
+                          <div class="value">025-86123456</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">家庭经济情况</div>
+                          <div class="value">良好</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">特殊家庭情况</div>
+                          <div class="value">无</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 家庭成员 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">家庭成员</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">称谓</th>
+                            <th class="text-left">姓名</th>
+                            <th class="text-left">年龄</th>
+                            <th class="text-left">工作单位</th>
+                            <th class="text-left">联系电话</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>父亲</td>
+                            <td>王建国</td>
+                            <td>48</td>
+                            <td>南京大学附属医院</td>
+                            <td>1391234****</td>
+                          </tr>
+                          <tr>
+                            <td>母亲</td>
+                            <td>李秀英</td>
+                            <td>46</td>
+                            <td>南京市第一中学</td>
+                            <td>1371234****</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 我的学籍异动 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">我的学籍异动</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">异动类型</th>
+                          <th class="text-left">异动时间</th>
+                          <th class="text-left">异动原因</th>
+                          <th class="text-left">审批状态</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center py-6" colspan="4">暂无数据</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- 学籍注册情况 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">学籍注册情况</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">学年学期</th>
+                          <th class="text-left">注册状态</th>
+                          <th class="text-left">注册时间</th>
+                          <th class="text-left">备注</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>2023-2024学年第一学期</td>
+                          <td>已注册</td>
+                          <td>2023-09-03</td>
+                          <td>-</td>
+                        </tr>
+                        <tr>
+                          <td>2022-2023学年第二学期</td>
+                          <td>已注册</td>
+                          <td>2023-02-20</td>
+                          <td>-</td>
+                        </tr>
+                        <tr>
+                          <td>2022-2023学年第一学期</td>
+                          <td>已注册</td>
+                          <td>2022-09-04</td>
+                          <td>-</td>
+                        </tr>
+                        <tr>
+                          <td>2021-2022学年第二学期</td>
+                          <td>已注册</td>
+                          <td>2022-02-21</td>
+                          <td>-</td>
+                        </tr>
+                        <tr>
+                          <td>2021-2022学年第一学期</td>
+                          <td>已注册</td>
+                          <td>2021-09-05</td>
+                          <td>-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- 本科生招生信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">本科生招生信息</h3>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <div class="label">考生号</div>
+                        <div class="value">32011608000123</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">考试科类</div>
+                        <div class="value">理科</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">高考总分</div>
+                        <div class="value">638</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">高考省排名</div>
+                        <div class="value">2150</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">高中毕业学校</div>
+                        <div class="value">南京市第一中学</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">录取批次</div>
+                        <div class="value">本科一批</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">录取专业</div>
+                        <div class="value">计算机科学与技术</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">是否第一志愿</div>
+                        <div class="value">是</div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                
+                <!-- 学工信息 -->
+                <section id="student-work-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">学工信息</h2>
+                  
+                  <!-- 惩（违纪处分） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">惩（违纪处分）</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">处分类型</th>
+                          <th class="text-left">处分原因</th>
+                          <th class="text-left">处分时间</th>
+                          <th class="text-left">撤销状态</th>
+                          <th class="text-left">撤销时间</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center py-6" colspan="5">暂无数据</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <!-- 奖（奖学金、个人荣誉称号） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">奖（奖学金、个人荣誉称号）</h3>
+                    
+                    <!-- 奖学金 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">奖学金</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">奖学金名称</th>
+                            <th class="text-left">奖学金等级</th>
+                            <th class="text-left">获奖时间</th>
+                            <th class="text-left">奖励金额(元)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年第一学期</td>
+                            <td>人民奖学金</td>
+                            <td>一等</td>
+                            <td>2022-11-15</td>
+                            <td>5000</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年第二学期</td>
+                            <td>学院奖学金</td>
+                            <td>二等</td>
+                            <td>2022-06-20</td>
+                            <td>3000</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 个人荣誉称号 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">个人荣誉称号</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">荣誉称号</th>
+                            <th class="text-left">授予单位</th>
+                            <th class="text-left">授予时间</th>
+                            <th class="text-left">荣誉级别</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年</td>
+                            <td>优秀学生干部</td>
+                            <td>计算机科学与技术系</td>
+                            <td>2023-06-15</td>
+                            <td>院级</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年</td>
+                            <td>优秀共青团员</td>
+                            <td>南京大学</td>
+                            <td>2022-05-04</td>
+                            <td>校级</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 助（困难生、困难补助、勤工助学） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">助（困难生、困难补助、勤工助学）</h3>
+                    
+                    <!-- 困难生 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">困难生</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">认定学年</th>
+                            <th class="text-left">困难等级</th>
+                            <th class="text-left">认定时间</th>
+                            <th class="text-left">认定状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center py-6" colspan="4">暂无数据</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 困难补助 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">困难补助</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">补助名称</th>
+                            <th class="text-left">补助金额(元)</th>
+                            <th class="text-left">补助时间</th>
+                            <th class="text-left">补助原因</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center py-6" colspan="4">暂无数据</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 勤工助学 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">勤工助学</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">岗位名称</th>
+                            <th class="text-left">工作单位</th>
+                            <th class="text-left">工作时间</th>
+                            <th class="text-left">工资标准(元/小时)</th>
+                            <th class="text-left">工作状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>图书馆助理</td>
+                            <td>南京大学图书馆</td>
+                            <td>2022-10-01至今</td>
+                            <td>20</td>
+                            <td>在岗</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 心理（预约次数） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">心理（预约次数）</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">学年学期</th>
+                          <th class="text-left">预约次数</th>
+                          <th class="text-left">最近预约日期</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center py-6" colspan="3">暂无数据</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <!-- 毕业去向 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">毕业去向</h3>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <div class="label">就业意向</div>
+                        <div class="value">考研</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">目标院校</div>
+                        <div class="value">南京大学</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">目标专业</div>
+                        <div class="value">计算机应用技术</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">备选意向</div>
+                        <div class="value">互联网企业就业</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 五育（五育情况、学科竞赛、成果管理） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">五育（五育情况、学科竞赛、成果管理）</h3>
+                    
+                    <!-- 五育情况 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">五育情况</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">评价项目</th>
+                            <th class="text-left">评价等级</th>
+                            <th class="text-left">评价学期</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>德育</td>
+                            <td>优秀</td>
+                            <td>2022-2023学年第一学期</td>
+                          </tr>
+                          <tr>
+                            <td>智育</td>
+                            <td>优秀</td>
+                            <td>2022-2023学年第一学期</td>
+                          </tr>
+                          <tr>
+                            <td>体育</td>
+                            <td>良好</td>
+                            <td>2022-2023学年第一学期</td>
+                          </tr>
+                          <tr>
+                            <td>美育</td>
+                            <td>合格</td>
+                            <td>2022-2023学年第一学期</td>
+                          </tr>
+                          <tr>
+                            <td>劳育</td>
+                            <td>优秀</td>
+                            <td>2022-2023学年第一学期</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 学科竞赛 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">学科竞赛</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">竞赛名称</th>
+                            <th class="text-left">获奖等级</th>
+                            <th class="text-left">获奖时间</th>
+                            <th class="text-left">竞赛级别</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>全国大学生数学建模竞赛</td>
+                            <td>省级二等奖</td>
+                            <td>2022-11-10</td>
+                            <td>省级</td>
+                          </tr>
+                          <tr>
+                            <td>蓝桥杯程序设计大赛</td>
+                            <td>省级一等奖</td>
+                            <td>2022-04-15</td>
+                            <td>省级</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 成果管理 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">成果管理</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">成果类型</th>
+                            <th class="text-left">成果名称</th>
+                            <th class="text-left">发表/获得时间</th>
+                            <th class="text-left">发表/授予单位</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>论文</td>
+                            <td>基于深度学习的图像识别系统研究</td>
+                            <td>2023-01-15</td>
+                            <td>计算机科学与技术</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 第二课堂（社团、五四评优、志愿服务、社会实践、青马课程、第二课堂、公共服务） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">第二课堂</h3>
+                    
+                    <!-- 社团 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">社团</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">社团名称</th>
+                            <th class="text-left">担任职务</th>
+                            <th class="text-left">加入时间</th>
+                            <th class="text-left">活动情况</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>计算机协会</td>
+                            <td>技术部部长</td>
+                            <td>2021-10-05</td>
+                            <td>积极参与</td>
+                          </tr>
+                          <tr>
+                            <td>摄影协会</td>
+                            <td>会员</td>
+                            <td>2022-03-15</td>
+                            <td>一般</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 志愿服务 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">志愿服务</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">服务名称</th>
+                            <th class="text-left">服务时间</th>
+                            <th class="text-left">服务时长(小时)</th>
+                            <th class="text-left">服务地点</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>敬老院志愿服务</td>
+                            <td>2022-10-20</td>
+                            <td>8</td>
+                            <td>南京市栖霞区敬老院</td>
+                          </tr>
+                          <tr>
+                            <td>校园环保宣传</td>
+                            <td>2023-04-22</td>
+                            <td>4</td>
+                            <td>南京大学校园</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 更多第二课堂相关内容 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">其他第二课堂活动</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">活动类型</th>
+                            <th class="text-left">活动名称</th>
+                            <th class="text-left">活动时间</th>
+                            <th class="text-left">活动成果</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>社会实践</td>
+                            <td>乡村振兴调研</td>
+                            <td>2022-07-05至2022-07-15</td>
+                            <td>优秀实践报告</td>
+                          </tr>
+                          <tr>
+                            <td>青马课程</td>
+                            <td>青年马克思主义培训班</td>
+                            <td>2022-11-10至2022-12-20</td>
+                            <td>优秀学员</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 因公出国（境） -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">因公出国（境）</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">出访国家/地区</th>
+                          <th class="text-left">出访目的</th>
+                          <th class="text-left">出访时间</th>
+                          <th class="text-left">返回时间</th>
+                          <th class="text-left">批准单位</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center py-6" colspan="5">暂无数据</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <!-- 校际交换 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">校际交换</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">交换学校</th>
+                          <th class="text-left">交换专业</th>
+                          <th class="text-left">开始时间</th>
+                          <th class="text-left">结束时间</th>
+                          <th class="text-left">项目名称</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td class="text-center py-6" colspan="5">暂无数据</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+                
+                <!-- 轨迹信息 -->
+                <section id="track-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">轨迹信息</h2>
+                  
+                  <!-- 学生通行管理 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">学生通行管理</h3>
+                    
+                    <!-- 请销假管理 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">请销假管理</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">请假类型</th>
+                            <th class="text-left">请假原因</th>
+                            <th class="text-left">开始时间</th>
+                            <th class="text-left">结束时间</th>
+                            <th class="text-left">请假状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>事假</td>
+                            <td>家庭事务</td>
+                            <td>2023-03-20 08:00</td>
+                            <td>2023-03-21 18:00</td>
+                            <td>已批准</td>
+                          </tr>
+                          <tr>
+                            <td>病假</td>
+                            <td>感冒发烧</td>
+                            <td>2022-12-05 08:00</td>
+                            <td>2022-12-07 18:00</td>
+                            <td>已批准</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 节假日离返校 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">节假日离返校</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">假期名称</th>
+                            <th class="text-left">离校时间</th>
+                            <th class="text-left">返校时间</th>
+                            <th class="text-left">目的地</th>
+                            <th class="text-left">交通方式</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023年寒假</td>
+                            <td>2023-01-15 10:30</td>
+                            <td>2023-02-12 14:20</td>
+                            <td>江苏省南京市</td>
+                            <td>高铁</td>
+                          </tr>
+                          <tr>
+                            <td>2022年国庆节</td>
+                            <td>2022-10-01 09:15</td>
+                            <td>2022-10-07 18:45</td>
+                            <td>江苏省南京市</td>
+                            <td>公交</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 离返校登记信息 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">离返校登记信息</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">登记类型</th>
+                            <th class="text-left">登记时间</th>
+                            <th class="text-left">登记地点</th>
+                            <th class="text-left">备注</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>返校</td>
+                            <td>2023-09-01 15:30</td>
+                            <td>南门</td>
+                            <td>正常返校</td>
+                          </tr>
+                          <tr>
+                            <td>离校</td>
+                            <td>2023-06-30 10:20</td>
+                            <td>东门</td>
+                            <td>暑假离校</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 图书借阅管理系统 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">图书借阅管理系统</h3>
+                    
+                    <!-- 图书馆出入记录 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">图书馆出入记录</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">记录类型</th>
+                            <th class="text-left">记录时间</th>
+                            <th class="text-left">图书馆名称</th>
+                            <th class="text-left">门禁点</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>进入</td>
+                            <td>2023-10-20 13:25</td>
+                            <td>仙林校区图书馆</td>
+                            <td>东门</td>
+                          </tr>
+                          <tr>
+                            <td>离开</td>
+                            <td>2023-10-20 18:40</td>
+                            <td>仙林校区图书馆</td>
+                            <td>东门</td>
+                          </tr>
+                          <tr>
+                            <td>进入</td>
+                            <td>2023-10-18 09:10</td>
+                            <td>仙林校区图书馆</td>
+                            <td>北门</td>
+                          </tr>
+                          <tr>
+                            <td>离开</td>
+                            <td>2023-10-18 11:45</td>
+                            <td>仙林校区图书馆</td>
+                            <td>北门</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 服务记录 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">服务记录</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">图书名称</th>
+                            <th class="text-left">借出时间</th>
+                            <th class="text-left">应还时间</th>
+                            <th class="text-left">归还时间</th>
+                            <th class="text-left">借阅状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>算法导论</td>
+                            <td>2023-09-10</td>
+                            <td>2023-10-10</td>
+                            <td>2023-10-05</td>
+                            <td>已归还</td>
+                          </tr>
+                          <tr>
+                            <td>深度学习</td>
+                            <td>2023-10-15</td>
+                            <td>2023-11-15</td>
+                            <td>-</td>
+                            <td>借阅中</td>
+                          </tr>
+                          <tr>
+                            <td>计算机网络</td>
+                            <td>2023-08-25</td>
+                            <td>2023-09-25</td>
+                            <td>2023-09-20</td>
+                            <td>已归还</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 网络资源服务 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">网络资源服务</h3>
+                    
+                    <!-- 认证日志 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">认证日志</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">认证时间</th>
+                            <th class="text-left">认证类型</th>
+                            <th class="text-left">认证设备</th>
+                            <th class="text-left">IP地址</th>
+                            <th class="text-left">认证状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023-10-21 08:15:30</td>
+                            <td>校园网登录</td>
+                            <td>笔记本电脑</td>
+                            <td>10.128.XX.XX</td>
+                            <td>成功</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-20 21:05:12</td>
+                            <td>校园网登录</td>
+                            <td>手机</td>
+                            <td>10.129.XX.XX</td>
+                            <td>成功</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-20 15:45:22</td>
+                            <td>校园网登录</td>
+                            <td>笔记本电脑</td>
+                            <td>10.128.XX.XX</td>
+                            <td>成功</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 一卡通消费记录 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">一卡通消费记录</h3>
+                    
+                    <!-- 网费 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">网费</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">消费时间</th>
+                            <th class="text-left">消费金额(元)</th>
+                            <th class="text-left">消费类型</th>
+                            <th class="text-left">备注</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023-10-01 10:12:35</td>
+                            <td>20.00</td>
+                            <td>充值</td>
+                            <td>校园网月费</td>
+                          </tr>
+                          <tr>
+                            <td>2023-09-01 09:30:15</td>
+                            <td>20.00</td>
+                            <td>充值</td>
+                            <td>校园网月费</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 校园卡 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">校园卡</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">消费时间</th>
+                            <th class="text-left">消费金额(元)</th>
+                            <th class="text-left">消费地点</th>
+                            <th class="text-left">消费类型</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023-10-21 12:30:45</td>
+                            <td>15.50</td>
+                            <td>第一食堂</td>
+                            <td>餐饮</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-21 07:50:12</td>
+                            <td>10.00</td>
+                            <td>第一食堂</td>
+                            <td>餐饮</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-20 18:15:30</td>
+                            <td>16.00</td>
+                            <td>第二食堂</td>
+                            <td>餐饮</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-20 11:45:22</td>
+                            <td>12.50</td>
+                            <td>第一食堂</td>
+                            <td>餐饮</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-20 09:20:10</td>
+                            <td>3.50</td>
+                            <td>超市</td>
+                            <td>购物</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+                
+                <!-- 教务信息 -->
+                <section id="academic-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">教务信息</h2>
+                  
+                  <!-- 成绩查看 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">成绩查看</h3>
+                    
+                    <!-- 课程成绩 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">课程成绩</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">课程名称</th>
+                            <th class="text-left">课程性质</th>
+                            <th class="text-left">学分</th>
+                            <th class="text-left">成绩</th>
+                            <th class="text-left">绩点</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>数据结构</td>
+                            <td>专业必修课</td>
+                            <td>4.0</td>
+                            <td>92</td>
+                            <td>4.2</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>计算机组成原理</td>
+                            <td>专业必修课</td>
+                            <td>4.0</td>
+                            <td>89</td>
+                            <td>3.9</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>离散数学</td>
+                            <td>专业必修课</td>
+                            <td>3.0</td>
+                            <td>85</td>
+                            <td>3.5</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>概率论与数理统计</td>
+                            <td>公共必修课</td>
+                            <td>3.0</td>
+                            <td>87</td>
+                            <td>3.7</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>大学英语(4)</td>
+                            <td>公共必修课</td>
+                            <td>2.0</td>
+                            <td>90</td>
+                            <td>4.0</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第一学期</td>
+                            <td>高级程序设计</td>
+                            <td>专业必修课</td>
+                            <td>4.0</td>
+                            <td>94</td>
+                            <td>4.4</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第一学期</td>
+                            <td>线性代数</td>
+                            <td>公共必修课</td>
+                            <td>3.0</td>
+                            <td>88</td>
+                            <td>3.8</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 四六级成绩 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">四六级成绩</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">考试名称</th>
+                            <th class="text-left">考试时间</th>
+                            <th class="text-left">总分</th>
+                            <th class="text-left">听力</th>
+                            <th class="text-left">阅读</th>
+                            <th class="text-left">写作和翻译</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>大学英语六级</td>
+                            <td>2022-12-17</td>
+                            <td>538</td>
+                            <td>196</td>
+                            <td>207</td>
+                            <td>135</td>
+                          </tr>
+                          <tr>
+                            <td>大学英语四级</td>
+                            <td>2021-12-18</td>
+                            <td>605</td>
+                            <td>220</td>
+                            <td>230</td>
+                            <td>155</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 学业审核查看 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">学业审核查看</h3>
+                    
+                    <!-- 学期学业审核结果 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">学期学业审核结果</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">平均学分绩点</th>
+                            <th class="text-left">修读学分数</th>
+                            <th class="text-left">获得学分数</th>
+                            <th class="text-left">审核结果</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>3.91</td>
+                            <td>16.0</td>
+                            <td>16.0</td>
+                            <td>合格</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第一学期</td>
+                            <td>4.10</td>
+                            <td>18.0</td>
+                            <td>18.0</td>
+                            <td>合格</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年第二学期</td>
+                            <td>3.85</td>
+                            <td>17.0</td>
+                            <td>17.0</td>
+                            <td>合格</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年第一学期</td>
+                            <td>3.75</td>
+                            <td>16.0</td>
+                            <td>16.0</td>
+                            <td>合格</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 教学信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">教学信息</h3>
+                    
+                    <!-- 免修不免考 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">免修不免考</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">课程名称</th>
+                            <th class="text-left">申请时间</th>
+                            <th class="text-left">申请原因</th>
+                            <th class="text-left">审批状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center py-6" colspan="4">暂无数据</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 缓考申请 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">缓考申请</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">课程名称</th>
+                            <th class="text-left">考试时间</th>
+                            <th class="text-left">申请原因</th>
+                            <th class="text-left">审批状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center py-6" colspan="4">暂无数据</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 体育锻炼考勤 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">体育锻炼考勤</h3>
+                    
+                    <!-- 运动记录 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">运动记录</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">运动日期</th>
+                            <th class="text-left">运动类型</th>
+                            <th class="text-left">运动时长(分钟)</th>
+                            <th class="text-left">运动强度</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023-10-19</td>
+                            <td>跑步</td>
+                            <td>30</td>
+                            <td>中等</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-17</td>
+                            <td>篮球</td>
+                            <td>60</td>
+                            <td>高</td>
+                          </tr>
+                          <tr>
+                            <td>2023-10-15</td>
+                            <td>跑步</td>
+                            <td>30</td>
+                            <td>中等</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 跑步成绩 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">跑步成绩</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">应完成次数</th>
+                            <th class="text-left">已完成次数</th>
+                            <th class="text-left">完成率</th>
+                            <th class="text-left">成绩评定</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年第二学期</td>
+                            <td>30</td>
+                            <td>28</td>
+                            <td>93.3%</td>
+                            <td>良好</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年第一学期</td>
+                            <td>30</td>
+                            <td>30</td>
+                            <td>100%</td>
+                            <td>优秀</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- 体测管理 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">体测管理</h3>
+                    
+                    <!-- 体测成绩 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">体测成绩</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">测试学年</th>
+                            <th class="text-left">身高(cm)</th>
+                            <th class="text-left">体重(kg)</th>
+                            <th class="text-left">肺活量(ml)</th>
+                            <th class="text-left">50米(秒)</th>
+                            <th class="text-left">立定跳远(cm)</th>
+                            <th class="text-left">总分</th>
+                            <th class="text-left">等级</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2022-2023学年</td>
+                            <td>175</td>
+                            <td>68</td>
+                            <td>4200</td>
+                            <td>7.2</td>
+                            <td>235</td>
+                            <td>85</td>
+                            <td>良好</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年</td>
+                            <td>174</td>
+                            <td>67</td>
+                            <td>4100</td>
+                            <td>7.3</td>
+                            <td>230</td>
+                            <td>83</td>
+                            <td>良好</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+                
+                <!-- 党团信息 -->
+                <section id="party-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">党团信息</h2>
+                  
+                  <!-- 团员基本信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">团员基本信息</h3>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <div class="label">姓名</div>
+                        <div class="value">王明阳</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">性别</div>
+                        <div class="value">男</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">民族</div>
+                        <div class="value">汉族</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">出生日期</div>
+                        <div class="value">2003-05-12</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">入团时间</div>
+                        <div class="value">2017-05-04</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">团组织关系所在支部</div>
+                        <div class="value">计算机科学与技术系2021级1班团支部</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">现任团内职务</div>
+                        <div class="value">团支书</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="label">入党积极分子</div>
+                        <div class="value">是</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 党员基本信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">党员基本信息</h3>
+                    <table class="w-full compact-table">
+                      <thead>
+                        <tr class="bg-gray-50">
+                          <th class="text-left">党员状态</th>
+                          <th class="text-left">入党申请书提交时间</th>
+                          <th class="text-left">入党积极分子确定时间</th>
+                          <th class="text-left">发展对象确定时间</th>
+                          <th class="text-left">预备党员转正时间</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>入党积极分子</td>
+                          <td>2021-10-01</td>
+                          <td>2022-04-15</td>
+                          <td>-</td>
+                          <td>-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+                
+                <!-- 资产信息 -->
+                <section id="asset-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">资产信息</h2>
+                  
+                  <!-- 医院信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">医院信息</h3>
+                    
+                    <!-- 体检 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">体检</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">体检年度</th>
+                            <th class="text-left">体检时间</th>
+                            <th class="text-left">体检结果</th>
+                            <th class="text-left">异常项目</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023年度</td>
+                            <td>2023-09-12</td>
+                            <td>正常</td>
+                            <td>无</td>
+                          </tr>
+                          <tr>
+                            <td>2022年度</td>
+                            <td>2022-09-15</td>
+                            <td>正常</td>
+                            <td>无</td>
+                          </tr>
+                          <tr>
+                            <td>2021年度</td>
+                            <td>2021-09-10</td>
+                            <td>正常</td>
+                            <td>无</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <!-- 医保信息 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">医保信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">医保卡号</div>
+                          <div class="value">320106200305XXXXX</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">参保状态</div>
+                          <div class="value">正常</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">参保类型</div>
+                          <div class="value">大学生医保</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">参保时间</div>
+                          <div class="value">2021-09-01</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 住宿信息 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">住宿信息</h3>
+                    
+                    <!-- 校内学生住宿信息 -->
+                    <div class="mb-4">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">校内学生住宿信息</h4>
+                      <div class="info-grid">
+                        <div class="info-item">
+                          <div class="label">宿舍区</div>
+                          <div class="value">仙林校区</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">楼栋</div>
+                          <div class="value">6号楼</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">房间号</div>
+                          <div class="value">304</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">床位号</div>
+                          <div class="value">2</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">入住时间</div>
+                          <div class="value">2021-09-05</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="label">住宿状态</div>
+                          <div class="value">正常</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 校外学生住宿信息 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">校外学生住宿信息</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">居住地址</th>
+                            <th class="text-left">入住时间</th>
+                            <th class="text-left">离开时间</th>
+                            <th class="text-left">居住证明</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td class="text-center py-6" colspan="4">暂无数据</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+                
+                <!-- 财务信息 -->
+                <section id="finance-info" class="info-section mb-8">
+                  <h2 class="text-lg font-bold text-gray-800 mb-4">财务信息</h2>
+                  
+                  <!-- 学费 -->
+                  <div class="info-card p-4 mb-4">
+                    <h3 class="text-md font-semibold mb-3">学费</h3>
+                    
+                    <!-- 学费缴纳情况 -->
+                    <div>
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">学费缴纳情况</h4>
+                      <table class="w-full compact-table">
+                        <thead>
+                          <tr class="bg-gray-50">
+                            <th class="text-left">学年学期</th>
+                            <th class="text-left">应缴金额(元)</th>
+                            <th class="text-left">实缴金额(元)</th>
+                            <th class="text-left">缴费时间</th>
+                            <th class="text-left">缴费状态</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>2023-2024学年</td>
+                            <td>5000</td>
+                            <td>5000</td>
+                            <td>2023-08-28</td>
+                            <td>已缴清</td>
+                          </tr>
+                          <tr>
+                            <td>2022-2023学年</td>
+                            <td>5000</td>
+                            <td>5000</td>
+                            <td>2022-08-25</td>
+                            <td>已缴清</td>
+                          </tr>
+                          <tr>
+                            <td>2021-2022学年</td>
+                            <td>5000</td>
+                            <td>5000</td>
+                            <td>2021-08-30</td>
+                            <td>已缴清</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- 右侧智能助手区域 -->
+        <div class="assistant-area p-6 overflow-hidden flex flex-col h-full">
+          <div class="flex items-center mb-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <h3 class="ml-2 font-medium text-gray-800">智能助手</h3>
+          </div>
+          
+          <!-- 工作建议区域 -->
+          <div class="assistant-dialog space-y-4 mb-2 flex-1 overflow-y-auto">
+            <div class="p-4 bg-blue-50 rounded-lg mb-4">
+              <h4 class="font-medium text-blue-800 mb-2">学生分析</h4>
+              <p class="text-sm text-gray-700">通过对张三的数据分析，我发现：</p>
+              <ul class="text-sm text-gray-700 mt-2 space-y-2">
+                <li>• 学习成绩优秀，GPA 3.8，专业排名第5</li>
+                <li>• 曾获国家奖学金，整体表现突出</li>
+                <li>• 担任班长，有较强的组织管理能力</li>
+                <li>• 10月30日有一次晚归记录，已处理</li>
+              </ul>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble user p-3">
+                <p class="text-sm">张三最近的学习情况如何？</p>
+              </div>
+            </div>
+            
+            <div class="flex">
+              <div class="chat-bubble assistant p-3">
+                <p class="text-sm text-gray-700">张三最近学习情况良好，本学期5门课程平均分91.2分，其中程序设计基础成绩最高，达到95分。根据最近的出勤记录，他没有缺勤情况，课堂参与度高。建议关注他在物理课程方面可能需要一些额外辅导，成绩相对较低（89分）。</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 输入框 -->
+          <div class="mt-auto">
+            <!-- 常见问题区域 -->
+            <div class="common-questions">
+              <div class="flex flex-wrap gap-1 mb-2">
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">生成学生报告</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">学习趋势分析</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">谈话主题建议</div>
+                <div class="quick-question bg-gray-50 px-2 py-1 rounded text-xs text-gray-700">心理状况分析</div>
+              </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden flex items-center pl-4 pr-1 py-1">
+              <input type="text" placeholder="请输入您的问题..." class="flex-1 text-sm bg-gray-50 outline-none">
+              <button class="p-2 rounded-full text-blue-500 hover:bg-blue-50">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加谈话详情弹窗 -->
+  <div id="talkDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-3/5 max-h-[90vh] overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-semibold text-lg">谈话记录详情</h3>
+        <button class="text-gray-400 hover:text-gray-600" onclick="closeTalkDetail()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 弹窗内容 -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- 学生基本信息 -->
+        <div class="flex items-start mb-6">
+          <div class="w-16 h-16 rounded-full bg-gray-200 overflow-hidden mr-4">
+            <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="学生头像" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <h4 class="text-lg font-medium">张三</h4>
+            <p class="text-gray-500 text-sm mb-1">学号：20210001 | 计算机学院 | 计算机2101班</p>
+            <div class="flex items-center">
+              <span class="bg-blue-100 text-blue-500 text-xs px-2 py-0.5 rounded mr-2">班长</span>
+              <span class="bg-green-100 text-green-500 text-xs px-2 py-0.5 rounded mr-2">成绩优异</span>
+              <span class="bg-purple-100 text-purple-500 text-xs px-2 py-0.5 rounded">学科竞赛</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话信息 -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+          <div class="grid grid-cols-4 gap-4 mb-4">
+            <div>
+              <p class="text-sm text-gray-500 mb-1">谈话日期</p>
+              <p class="font-medium">2024-07-01 10:30</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">谈话地点</p>
+              <p class="font-medium">计算机学院辅导员办公室</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">谈话类型</p>
+              <p class="font-medium">学业问题咨询</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500 mb-1">时长</p>
+              <p class="font-medium">45分钟</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话内容 -->
+        <div class="mb-6">
+          <h4 class="font-medium mb-3">谈话内容</h4>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <p class="text-gray-700 mb-3">
+              张三同学反映最近对算法课程学习感到吃力，尤其是动态规划和图论算法部分，虽然能理解课堂内容，但作业和实践环节遇到困难。
+            </p>
+            <p class="text-gray-700 mb-3">
+              通过交流了解到，主要问题是缺乏系统性学习和实践不足。我向他推荐了额外的学习资源，包括算法课程和力扣平台上的相关题目。
+            </p>
+            <p class="text-gray-700">
+              同时建议他参加算法学习小组，与同学互相讨论，共同解决问题。学生表示会按照建议调整学习方法，并与我保持反馈。
+            </p>
+          </div>
+        </div>
+        
+        <!-- 谈话总结 -->
+        <div>
+          <h4 class="font-medium mb-3">谈话总结</h4>
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <p class="text-gray-700">
+              学生学习态度积极，但存在学习方法不当问题。通过提供学习资源和引导参与小组学习，帮助其建立更有效的学习策略。需要两周后跟进效果。
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 弹窗底部 -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md" onclick="closeTalkDetail()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加新增谈话弹窗 -->
+  <div id="newTalkDialog" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center overflow-auto py-8">
+    <div class="bg-white rounded-lg shadow-xl w-3/5 max-w-3xl overflow-hidden flex flex-col">
+      <!-- 弹窗头部 -->
+      <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        <h3 class="font-semibold text-lg">新增谈心谈话记录</h3>
+        <button class="text-gray-400 hover:text-gray-600" onclick="closeNewTalkDialog()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- 弹窗内容 -->
+      <div class="flex-1 overflow-y-auto p-6" style="max-height: 70vh;">
+        <!-- 学生信息 -->
+        <div class="flex items-center mb-6 bg-gray-50 p-4 rounded-lg">
+          <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
+            <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="学生头像" class="w-full h-full object-cover">
+          </div>
+          <div>
+            <h4 class="font-medium">张三</h4>
+            <p class="text-gray-500 text-sm">学号：20210001 | 计算机学院 | 计算机2101班</p>
+          </div>
+        </div>
+        
+        <!-- 分割线 -->
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center">
+            <span class="bg-white px-4 text-sm text-gray-500">基本信息</span>
+          </div>
+        </div>
+        
+        <!-- 基本信息 -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div class="group">
+            <label class="block text-sm text-gray-600 mb-2">谈话日期时间 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="far fa-calendar-alt text-gray-400"></i>
+              </div>
+              <input type="datetime-local" class="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200">
+            </div>
+          </div>
+          <div class="group">
+            <label class="block text-sm text-gray-600 mb-2">谈话地点 <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-map-marker-alt text-gray-400"></i>
+              </div>
+              <input type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 pl-10 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入谈话地点">
+            </div>
+          </div>
+        </div>
+        
+        <!-- 分割线 -->
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center">
+            <span class="bg-white px-4 text-sm text-gray-500">谈话内容</span>
+          </div>
+        </div>
+        
+        <!-- 文件上传和语音转文字 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">文件上传</label>
+          <div class="border border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50">
+            <i class="fas fa-file-upload text-gray-400 text-xl mb-2"></i>
+            <p class="text-gray-500 mb-3">上传文件（支持语音文件和文本文件）</p>
+            <div class="flex justify-center">
+              <button class="bg-white text-blue-500 border border-blue-300 px-3 py-1.5 rounded-md text-sm hover:bg-blue-50 transition-all duration-200">
+                <i class="fas fa-upload mr-2"></i>上传文件
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">支持格式：.mp3, .wav, .txt, .docx等</p>
+          </div>
+        </div>
+        
+        <!-- 转换按钮 -->
+        <div class="mb-6 flex justify-center">
+          <button id="convertToText" class="bg-green-50 text-green-600 px-4 py-2 rounded-md text-sm hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" disabled>
+            <i class="fas fa-file-alt mr-2"></i>将语音转换为文字
+          </button>
+        </div>
+        
+        <!-- 谈话内容 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">谈话内容 <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <textarea id="talkContent" class="w-full border border-gray-300 rounded-md px-3 py-2 h-40 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入或从文件导入谈话内容"></textarea>
+            <div class="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-2 py-1 rounded-md">
+              <i class="fas fa-keyboard mr-1"></i><span id="charCount">0</span> 字
+            </div>
+          </div>
+        </div>
+        
+        <!-- AI分析按钮 -->
+        <div class="mb-6 flex justify-center">
+          <button id="generateAISummary" class="bg-blue-500 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600 transition-all duration-200" onclick="generateAISummary()">
+            <i class="fas fa-robot mr-2"></i>生成AI总结和建议
+          </button>
+        </div>
+        
+        <!-- AI总结结果 -->
+        <div id="aiSummaryResult" class="mb-6 bg-blue-50 p-4 rounded-md border border-blue-200 hidden">
+          <div class="flex items-start">
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center mr-3 flex-shrink-0 border border-blue-200">
+              <i class="fas fa-robot text-blue-500"></i>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-blue-800 font-medium mb-3">AI 分析与建议</h4>
+              <div id="aiSummaryContent" class="text-gray-700 bg-white p-4 rounded-md border border-blue-100">
+                <!-- AI生成的内容将在这里显示 -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 谈话总结 -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-600 mb-2">谈话总结 <span class="text-red-500">*</span></label>
+          <textarea id="talkSummary" class="w-full border border-gray-300 rounded-md px-3 py-2 h-32 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 outline-none transition-all duration-200" placeholder="输入谈话总结或使用AI生成的总结"></textarea>
+        </div>
+      </div>
+      
+      <!-- 弹窗底部 -->
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50">
+        <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-md mr-3 hover:bg-gray-200 transition-all duration-200" onclick="closeNewTalkDialog()">
+          取消
+        </button>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all duration-200" onclick="submitNewTalk()">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 为侧边导航添加滚动监听
+    document.addEventListener('DOMContentLoaded', function() {
+      const sideNavItems = document.querySelectorAll('.side-nav-item');
+      const sections = document.querySelectorAll('.info-section');
+      
+      // 点击导航项滚动到对应部分
+      sideNavItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.querySelector('a').getAttribute('href');
+          const targetSection = document.querySelector(targetId);
+          
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+      
+      // 为常见问题添加点击事件
+      const quickQuestions = document.querySelectorAll('.quick-question');
+      quickQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+          const text = this.textContent;
+          console.log('问题已选择:', text);
+        });
+      });
+      
+      // 监听滚动，高亮当前所在部分的导航项
+      function highlightNav() {
+        let current = '';
+        
+        sections.forEach(section => {
+          const sectionTop = section.getBoundingClientRect().top;
+          if (sectionTop < 200) {
+            current = '#' + section.getAttribute('id');
+          }
+        });
+        
+        sideNavItems.forEach(item => {
+          item.classList.remove('active');
+          const link = item.querySelector('a');
+          if (link.getAttribute('href') === current) {
+            item.classList.add('active');
+          }
+        });
+      }
+      
+      // 初始化高亮
+      highlightNav();
+      
+      // 监听滚动事件
+      window.addEventListener('scroll', highlightNav, { passive: true });
+    });
+    
+    // 根据URL参数控制谈心谈话区域的显示/隐藏
+    document.addEventListener('DOMContentLoaded', function() {
+      // 获取URL参数
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get('source');
+      const talkInfoSection = document.getElementById('talk-info');
+      const talkInfoContent = document.getElementById('talkInfoContent');
+      
+      // 始终显示谈心谈话区域的标题和切换按钮
+      if (talkInfoSection) {
+        talkInfoSection.classList.remove('hidden');
+      }
+      
+      // 根据来源决定内容区域是否显示
+      if (source === 'talk') {
+        // 来自谈心谈话页面，默认展开内容
+        if (talkInfoContent) {
+          talkInfoContent.style.display = 'block';
+          updateToggleButton(true);
+        }
+        
+        // 激活左侧导航中的谈心谈话项
+        const navItems = document.querySelectorAll('.side-nav-item');
+        navItems.forEach(item => {
+          item.classList.remove('active');
+          if (item.querySelector('a').getAttribute('href') === '#talk-info') {
+            item.classList.add('active');
+          }
+        });
+        
+        // 滚动到谈心谈话区域
+        talkInfoSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        // 来自其他页面，默认收起内容
+        if (talkInfoContent) {
+          talkInfoContent.style.display = 'none';
+          updateToggleButton(false);
+        }
+      }
+    });
+    
+    // 切换谈心谈话区域显示/隐藏
+    function toggleTalkInfo() {
+      const talkInfoContent = document.getElementById('talkInfoContent');
+      const talkInfoSection = document.getElementById('talk-info');
+      
+      if (talkInfoContent.style.display === 'none') {
+        // 当前是隐藏状态，切换为显示
+        talkInfoContent.style.display = 'block';
+        updateToggleButton(true);
+      } else {
+        // 当前是显示状态，切换为隐藏
+        talkInfoContent.style.display = 'none';
+        updateToggleButton(false);
+      }
+    }
+    
+    // 更新切换按钮的状态
+    function updateToggleButton(isExpanded) {
+      const toggleBtn = document.getElementById('toggleTalkInfoBtn');
+      if (toggleBtn) {
+        if (isExpanded) {
+          toggleBtn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i><span>收起</span>';
+        } else {
+          toggleBtn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i><span>展开</span>';
+        }
+      }
+    }
+    
+    // 显示谈话详情
+    function showTalkDetail() {
+      document.getElementById('talkDetailModal').classList.remove('hidden');
+    }
+    
+    // 关闭谈话详情
+    function closeTalkDetail() {
+      document.getElementById('talkDetailModal').classList.add('hidden');
+    }
+    
+    // 显示新增谈话对话框
+    function showNewTalkDialog() {
+      const dialog = document.getElementById('newTalkDialog');
+      if (dialog) {
+        // 在学生详情页，直接显示学生信息，隐藏搜索框
+        // 获取当前学生信息
+        const studentName = document.querySelector('.student-name').textContent.trim();
+        const studentId = document.querySelector('.student-id').textContent.trim();
+        
+        // 如果页面中有studentSearchSection元素，就隐藏它
+        const searchSection = document.getElementById('studentSearchSection');
+        if (searchSection) {
+          searchSection.style.display = 'none';
+        }
+        
+        // 如果页面中有studentInfoSection元素，就显示它并填充当前学生信息
+        const infoSection = document.getElementById('studentInfoSection');
+        if (infoSection) {
+          infoSection.style.display = 'flex';
+          document.getElementById('dialogStudentName').innerText = studentName;
+          document.getElementById('dialogStudentId').innerText = studentId;
+        }
+        
+        // 显示对话框
+        dialog.classList.remove('hidden');
+      }
+    }
+    
+    // 关闭新增谈话对话框
+    function closeNewTalkDialog() {
+      document.getElementById('newTalkDialog').classList.add('hidden');
+    }
+    
+    // 提交新谈话记录
+    function submitNewTalk() {
+      alert('谈话记录已保存');
+      closeNewTalkDialog();
+    }
+    
+    // 新增AI总结功能
+    function generateAISummary() {
+      const talkContent = document.getElementById('talkContent').value;
+      
+      // 检查是否有谈话内容
+      if(!talkContent || talkContent.trim() === '') {
+        alert('请先填写谈话内容，再生成AI总结');
+        return;
+      }
+      
+      // 显示加载状态
+      const aiSummaryResult = document.getElementById('aiSummaryResult');
+      const aiSummaryContent = document.getElementById('aiSummaryContent');
+      aiSummaryResult.classList.remove('hidden');
+      aiSummaryContent.innerHTML = `
+        <div class="flex items-center justify-center py-3">
+          <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          <span class="ml-3 text-blue-600">正在分析谈话内容...</span>
+        </div>
+      `;
+      
+      // 模拟AI处理
+      setTimeout(() => {
+        // 分析谈话内容（示例）
+        const summary = analyzeTalkContent(talkContent);
+        
+        // 显示分析结果
+        aiSummaryContent.innerHTML = `
+          <p class="text-gray-700 leading-relaxed">${summary.summary}</p>
+          <div class="flex justify-end mt-3">
+            <button class="text-blue-600 text-sm flex items-center" onclick="copyToSummary()">
+              <i class="far fa-copy mr-1"></i>复制到谈话总结
+            </button>
+          </div>
+        `;
+        
+        // 自动填充谈话总结
+        document.getElementById('talkSummary').value = summary.summary;
+        
+        // 添加动画效果
+        aiSummaryResult.classList.add('animate-fade-in');
+      }, 1500);
+    }
+    
+    // 复制到谈话总结的函数
+    function copyToSummary() {
+      const talkSummary = document.getElementById('talkSummary');
+      const aiSummaryContent = document.getElementById('aiSummaryContent');
+      const summaryText = aiSummaryContent.querySelector('p').textContent;
+      
+      talkSummary.value = summaryText;
+      talkSummary.focus();
+      
+      // 显示复制成功提示
+      const button = aiSummaryContent.querySelector('button');
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-check mr-1"></i>已复制';
+      button.classList.add('text-green-600');
+      
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('text-green-600');
+      }, 2000);
+    }
+    
+    // 模拟谈话内容分析（实际项目中应当调用API）
+    function analyzeTalkContent(content) {
+      // 这里是模拟的AI分析，实际应用中应当调用后端API
+      return {
+        summary: "通过谈话了解到学生在算法课程学习中遇到困难，特别是动态规划和图论算法部分。学生能够理解课堂内容，但在作业和实践环节遇到障碍。学习方法不当和实践不足是主要原因，建议加强算法基础训练，参加学习小组互相讨论，增加课后练习时间。学生表示会调整学习方法，建议两周后跟进学习情况。"
+      };
+    }
+    
+    // 模拟文件上传和处理
+    document.addEventListener('DOMContentLoaded', function() {
+      // 字数统计功能
+      const talkContent = document.getElementById('talkContent');
+      const charCount = document.getElementById('charCount');
+      
+      if(talkContent && charCount) {
+        talkContent.addEventListener('input', function() {
+          charCount.textContent = this.value.length;
+        });
+      }
+      
+      // 添加淡入动画类
+      document.head.insertAdjacentHTML('beforeend', `
+        <style>
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+          }
+        </style>
+      `);
+      
+      // 模拟文件上传后启用转换按钮
+      const uploadBtn = document.querySelector('#newTalkDialog .border-blue-300');
+      const convertBtn = document.getElementById('convertToText');
+      
+      if(uploadBtn && convertBtn) {
+        uploadBtn.addEventListener('click', function() {
+          // 模拟上传中状态
+          this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>上传中...';
+          this.disabled = true;
+          
+          // 模拟文件上传完成
+          setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>上传成功';
+            
+            setTimeout(() => {
+              this.innerHTML = '<i class="fas fa-upload mr-2"></i>上传文件';
+              this.disabled = false;
+              
+              // 启用转换按钮
+              convertBtn.disabled = false;
+            }, 1500);
+          }, 1000);
+        });
+      }
+      
+      // 模拟转换功能
+      if(convertBtn) {
+        convertBtn.addEventListener('click', function() {
+          if(!this.disabled) {
+            // 显示转换中状态
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>转换中...';
+            this.disabled = true;
+            
+            // 模拟转换过程
+            setTimeout(() => {
+              const talkContent = document.getElementById('talkContent');
+              talkContent.value = "这是从语音文件转换的文字内容。学生反映最近对算法课程学习感到吃力，尤其是动态规划和图论算法部分，虽然能理解课堂内容，但作业和实践环节遇到困难。";
+              charCount.textContent = talkContent.value.length;
+              
+              // 恢复按钮状态
+              this.innerHTML = '<i class="fas fa-check-circle mr-2"></i>转换成功';
+              
+              setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-file-alt mr-2"></i>将语音转换为文字';
+                this.disabled = false;
+              }, 1500);
+            }, 1500);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html> 
